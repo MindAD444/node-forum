@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập - Forum</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-right">
+      <a href="index.html">Trang chủ</a>
+      <a href="register.html">Đăng ký</a>
+    </div>
+  </nav>
+
+  <main class="form-container">
+    <h1>Đăng nhập</h1>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Tên đăng nhập" required />
+      <input type="password" id="password" placeholder="Mật khẩu" required />
+      <button type="submit">Đăng nhập</button>
+    </form>
+    <p id="message"></p>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const tokenParts = JSON.parse(atob(data.token.split('.')[1]));
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", username);
+        localStorage.setItem("role", tokenParts.role || "");
+        localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
+        window.location.href = "index.html";
+      } else {
+        document.getElementById("message").textContent = data.error || "Đăng nhập thất bại.";
+      }
+    });
+  </script>
+</body>
+</html>

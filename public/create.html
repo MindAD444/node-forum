@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng bài mới - Forum</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left"><span id="username-display"></span></div>
+    <div class="nav-right">
+      <a href="index.html">Trang chủ</a>
+      <button id="logout-btn">Đăng xuất</button>
+    </div>
+  </nav>
+
+  <main class="form-container">
+    <h1>📝 Đăng bài mới</h1>
+    <form id="post-form" enctype="multipart/form-data">
+      <input type="text" id="title" placeholder="Tiêu đề bài viết" required />
+      <textarea id="content" rows="6" placeholder="Nội dung bài viết..." required></textarea>
+
+      <label for="files" class="file-label">Đính kèm tệp (tối đa 5 tệp)</label>
+      <input type="file" id="files" multiple accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+
+      <div id="file-list" class="file-list"></div>
+
+      <button type="submit">Đăng bài</button>
+    </form>
+    <p id="message"></p>
+  </main>
+
+  <script>
+  const filesInput = document.getElementById('files');
+  const fileList = document.getElementById('file-list');
+  filesInput.addEventListener('change', () => {
+    fileList.innerHTML = '';
+    const files = Array.from(filesInput.files);
+    if (files.length === 0) {
+      fileList.textContent = 'Chưa chọn tệp nào.';
+      return;
+    }
+    const ul = document.createElement('ul');
+    files.slice(0, 10).forEach(f => {
+      const li = document.createElement('li');
+      li.textContent = `${f.name} (${Math.round(f.size/1024)} KB)`;
+      ul.appendChild(li);
+    });
+    fileList.appendChild(ul);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem("token")) {
+      window.location.href = "login.html";
+    }
+  });
+
+  document.getElementById("post-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("title").value.trim();
+    const content = document.getElementById("content").value.trim();
+    const files = document.getElementById("files").files;
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      document.getElementById("message").textContent = "Bạn cần đăng nhập để đăng bài.";
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('content', content);
+
+    const MAX_FILES = 5;
+    for (let i = 0; i < files.length && i < MAX_FILES; i++) {
+      fd.append('files', files[i]);
+    }
+
+    try {
+      const res = await fetch('/posts', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById("message").textContent = "Đăng bài thành công! Chờ duyệt.";
+        document.getElementById("post-form").reset();
+        fileList.innerHTML = '';
+      } else {
+        document.getElementById("message").textContent = data.error || 'Lỗi khi đăng bài.';
+      }
+    } catch (err) {
+      document.getElementById("message").textContent = 'Lỗi kết nối tới server.';
+    }
+  });
+  </script>
+</body>
+</html>

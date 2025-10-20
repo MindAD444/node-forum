@@ -1,0 +1,458 @@
+/* style.css */
+:root {
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --danger-color: #dc2626;
+  --text-color: #333;
+  --text-light: #6b7280;
+  --bg-color: #f4f4f4;
+  --border-color: #e5e7eb;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+}
+
+body {
+  font-family: sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding-top: 60px; /* Cho navbar cố định */
+}
+
+/* =================================== */
+/* NAVBAR (CHUNG) */
+/* =================================== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+
+.nav-left span {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.nav-right a,
+.nav-right button {
+  text-decoration: none;
+  color: var(--text-color);
+  margin-left: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+/* =================================== */
+/* NÚT HÀNH ĐỘNG NAVBAR   */
+/* =================================== */
+#login-link, #register-link, #admin-link, #create-link, #logout-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent; 
+}
+
+#login-link:hover, #register-link:hover, #admin-link:hover, 
+#create-link:hover, #logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
+  text-decoration: none;
+}
+
+/* 1. Nút Chính (Đăng nhập, Đăng ký) */
+#login-link, #register-link {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 4px var(--shadow-light);
+}
+
+#login-link:hover, #register-link:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: white; 
+}
+
+/* 2. Nút Phụ (Đăng bài, Quản trị) */
+#create-link, #admin-link {
+  background: none;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+#create-link:hover, #admin-link:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* 3. Nút Nguy hiểm (Đăng xuất) */
+#logout-btn {
+  background: none;
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+  font-size: 0.95rem; 
+  cursor: pointer;
+}
+
+#logout-btn:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+.hidden {
+  display: none !important; 
+}
+
+/* =================================== */
+/* POSTS AND GENERAL LAYOUT (index.html) */
+/* =================================== */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h1 {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-card {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.post-card h2 {
+  margin-top: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.post-card p {
+  line-height: 1.6;
+}
+
+.post-meta {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.file-section {
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+}
+
+.post-image {
+  max-width: 100%;
+  height: auto;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.post-actions {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.post-delete-btn {
+  background: none;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: all 0.2s;
+}
+
+.post-delete-btn:hover {
+  background: var(--danger-color);
+  color: white;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+/* =================================== */
+/* COMMENTS (index.html) */
+/* =================================== */
+
+.comment-section {
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.comment-section h4 {
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-height: 300px; 
+  overflow-y: auto; 
+  padding-right: 10px; 
+}
+
+.comment-item {
+  background: #f9f9f9;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  position: relative; 
+}
+
+.comment-item p {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.comment-item span {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  display: block;
+}
+
+/* Nút xóa bình luận */
+.comment-delete-btn {
+  position: absolute;
+  top: 0.5rem; 
+  right: 0.5rem; 
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  font-size: 0.75rem; 
+  padding: 0.3rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.comment-delete-btn:hover {
+  opacity: 1;
+  color: var(--danger-color);
+  background: none; 
+}
+
+
+.no-comments, .comment-login-prompt {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.comment-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.comment-form textarea {
+  flex-grow: 1;
+  min-height: 40px;
+  height: 40px; 
+  margin: 0;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.comment-form button {
+  height: 40px; 
+  flex-shrink: 0;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.comment-form button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* =================================== */
+/* FORM PAGES (login.html, register.html) */
+/* =================================== */
+
+.form-container {
+  max-width: 400px;
+  margin: 5rem auto 2rem; 
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px var(--shadow-light);
+  text-align: center;
+}
+
+.form-container h1 {
+  margin-top: 0;
+  font-size: 1.8rem;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+  display: inline-block; 
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-container input[type="text"],
+.form-container input[type="password"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-container input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.form-container button[type="submit"] {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.form-container button[type="submit"]:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+#message {
+  margin-top: 1rem;
+  color: var(--danger-color);
+  font-weight: 500;
+}
+
+
+/* =================================== */
+/* RESPONSIVENESS (MOBILE DEVICES) */
+/* =================================== */
+
+@media (max-width: 768px) {
+  
+  /* Giảm padding chung và tăng độ rộng container */
+  .container {
+    margin: 1rem auto;
+    padding: 0 0.5rem; 
+  }
+
+  /* Điều chỉnh navbar cho màn hình nhỏ */
+  .navbar {
+    flex-direction: column; 
+    align-items: flex-start;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .nav-left {
+    margin-bottom: 0.5rem; 
+  }
+
+  .nav-right {
+    width: 100%;
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 0.5rem; 
+    margin-left: 0;
+  }
+
+  .nav-right a,
+  .nav-right button {
+    margin: 0; 
+    flex: 1 1 auto; 
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  /* Đảm bảo nút đăng xuất vẫn nổi bật */
+  #logout-btn {
+    flex: 0 0 auto; 
+    width: 100%; 
+  }
+
+  /* Giảm kích thước chữ trong bài viết */
+  .post-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .post-card p {
+    font-size: 0.95rem;
+  }
+
+  /* Form bình luận: Stack (xếp chồng) textarea và button */
+  .comment-form {
+    flex-direction: column; 
+    gap: 0.75rem;
+  }
+  
+  .comment-form textarea {
+    min-height: 80px; 
+    height: auto;
+  }
+  
+  .comment-form button {
+    width: 100%; 
+    height: auto; 
+    padding: 0.6rem 1rem;
+  }
+  
+  /* Đảm bảo nút xóa bình luận vẫn ở góc */
+  .comment-item {
+    padding-right: 3rem; 
+  }
+  
+  /* FORM PAGES RESPONSIVENESS */
+  .form-container {
+    max-width: 100%;
+    margin: 2rem 0; 
+    padding: 1rem; 
+    box-shadow: none; 
+    border-radius: 0; 
+  }
+
+}
+
