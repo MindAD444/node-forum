@@ -9,12 +9,14 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import cors from "cors";
 import path from "path";
-// import fs from "fs-extra"; // KHÔNG CẦN NỮA
+// import fs from "fs-extra"; // Đã bỏ: Không còn lưu file cục bộ
 import multer from "multer";
 import { fileURLToPath } from "url";
 // THÊM: Cloudinary imports
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+// THÊM: Nodemailer import
+import nodemailer from "nodemailer"; 
 
 
 dotenv.config();
@@ -40,6 +42,23 @@ cloudinary.config({
 
 
 // =======================
+//  Cấu hình Gửi Email Xác Thực (OTP)
+// =======================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Mật khẩu ứng dụng (App Password)
+  },
+});
+
+transporter.verify((error, success) => {
+  if (error) console.error("❌ Lỗi SMTP:", error);
+  else console.log("📨 Gmail SMTP hoạt động.");
+});
+
+
+// =======================
 //  MongoDB
 // =======================
 mongoose
@@ -54,6 +73,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
   isAdmin: { type: Boolean, default: false },
+  email: { type: String, unique: true, required: false } // THÊM EMAIL
 });
 
 const postSchema = new mongoose.Schema({
@@ -118,14 +138,12 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // Giới hạn 10MB
 });
 
-// KHÔNG CẦN app.use("/uploads", express.static...) nữa
+
 // =======================
 //  Hàm tiện ích
 // =======================
 /**
  * Trích xuất public_id từ URL của Cloudinary để xóa file.
- * Cloudinary URL: https://res.cloudinary.com/.../v1600000000/forum_uploads/filename.jpg
- * public_id: forum_uploads/filename
  */
 const extractPublicId = (url) => {
     try {
@@ -143,7 +161,7 @@ const extractPublicId = (url) => {
 };
 
 // =======================
-//  Routes: Auth (Giữ nguyên)
+//  Routes: Auth
 // =======================
 app.get("/me", verifyToken, async (req, res) => {
   try {
@@ -155,26 +173,110 @@ app.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-app.post("/register", async (req, res) => {
+
+// =======================
+//  Đăng ký bằng Email Xác Thực (OTP)
+// =======================
+const verificationCodes = {}; // Bộ nhớ tạm để lưu mã OTP
+
+app.post("/register/request", async (req, res) => { 
   try {
-    const { username, password, isAdmin } = req.body;
-    const existing = await User.findOne({ username });
-    if (existing)
-      return res.status(400).json({ message: "Tên người dùng đã tồn tại" });
-    const hashed = await bcrypt.hash(password, 10);
-    await new User({ username, password: hashed, isAdmin: !!isAdmin }).save();
-    res.json({ message: "Đăng ký thành công" });
+    const { username, email, password } = req.body; 
+
+    if (!username || !email || !password)
+      return res.status(400).json({ message: "Thiếu thông tin đăng ký" });
+
+    // Kiểm tra tên người dùng đã tồn tại
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) return res.status(400).json({ message: "Tên người dùng đã tồn tại" });
+    
+    // Kiểm tra email đã tồn tại
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) return res.status(400).json({ message: "Email đã được sử dụng." });
+
+
+    const code = Math.floor(100000 + Math.random() * 900000);
+    
+    // Lưu tạm thời thông tin user và mã OTP
+    verificationCodes[email] = {
+      code,
+      username,
+      password,
+      createdAt: Date.now(),
+    };
+
+    const mailOptions = {
+      from: `"Forum" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Mã xác thực tài khoản Forum",
+      html: `
+        <div style="font-family:Arial,sans-serif;padding:16px;background:#f5f5f5">
+          <h2 style="color:#007bff">Xin chào ${username}!</h2>
+          <p>Bạn vừa yêu cầu đăng ký tài khoản Forum.</p>
+          <p>Mã xác thực của bạn là:</p>
+          <h1 style="letter-spacing:3px">${code}</h1>
+          <p>Mã này có hiệu lực trong 10 phút.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ message: "✅ Đã gửi mã xác thực đến email của bạn." });
   } catch (err) {
-    res.status(500).json({ error: "Lỗi server khi đăng ký" });
+    console.error("❌ Lỗi gửi mã:", err);
+    res.status(500).json({ message: "Không thể gửi mã xác thực. Vui lòng kiểm tra email hợp lệ." });
   }
 });
 
+app.post("/register/verify", async (req, res) => { 
+  try {
+    const { email, code } = req.body;
+    const record = verificationCodes[email];
+    
+    if (!record)
+      return res.status(400).json({ message: "Không tìm thấy yêu cầu xác thực. Vui lòng yêu cầu lại." });
+
+    if (Date.now() - record.createdAt > 10 * 60 * 1000) {
+        delete verificationCodes[email];
+        return res.status(400).json({ message: "Mã xác thực đã hết hạn." });
+    }
+
+    if (parseInt(code) !== record.code)
+      return res.status(400).json({ message: "Mã xác thực không đúng." });
+
+    // Tạo tài khoản
+    const hashed = await bcrypt.hash(record.password, 10);
+    await new User({
+      username: record.username,
+      email: email, // Lưu email vào DB
+      password: hashed,
+      isAdmin: false,
+    }).save();
+
+    delete verificationCodes[email];
+    res.json({ message: "🎉 Đăng ký thành công!" });
+  } catch (err) {
+    console.error("❌ Lỗi xác minh mã:", err);
+    res.status(500).json({ message: "Lỗi xác minh mã. Vui lòng thử lại." });
+  }
+});
+
+
 app.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
+    const { username, password } = req.body; // username có thể là username HOẶC email
+    
+    // Tìm kiếm user bằng username HOẶC email
+    const user = await User.findOne({ 
+        $or: [
+            { username: username }, // Trường hợp nhập tên đăng nhập
+            { email: username }     // Trường hợp nhập email
+        ]
+    });
+    
     if (!user)
       return res.status(404).json({ message: "Không tìm thấy người dùng" });
+      
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Sai mật khẩu" });
 
@@ -203,11 +305,10 @@ app.post("/posts", verifyToken, upload.array("files", 5), async (req, res) => {
   try {
     const { title, content } = req.body;
     if (!title || !content) {
-        // Tùy chọn: Xóa các file đã upload nếu form bị lỗi (phức tạp)
         return res.status(400).json({ message: "Thiếu tiêu đề hoặc nội dung" });
     }
     
-    // THAY ĐỔI: Lấy URL công khai từ Cloudinary
+    // Lấy URL công khai từ Cloudinary
     const filePaths = req.files.map((f) => f.path); 
     
     const newPost = new Post({
@@ -239,12 +340,12 @@ app.delete("/posts/:id", verifyToken, async (req, res) => {
 
     await Post.findByIdAndDelete(req.params.id);
     
-    // THAY ĐỔI: Xóa files trên Cloudinary
+    // Xóa files trên Cloudinary
     if (post.files && post.files.length > 0) {
         for (const filePath of post.files) {
             const publicId = extractPublicId(filePath);
             if (publicId) {
-                // Tùy chọn: Xác định resource_type nếu bạn dùng cả video/raw file
+                // Xóa cả image và raw file (để bao quát PDF/DOCX)
                 await cloudinary.uploader.destroy(publicId, { resource_type: "raw" }).catch(() => {});
                 await cloudinary.uploader.destroy(publicId, { resource_type: "image" }).catch(() => {});
             }
@@ -260,7 +361,7 @@ app.delete("/posts/:id", verifyToken, async (req, res) => {
 
 
 // =======================
-//  Routes: Comments (Giữ nguyên)
+//  Routes: Comments
 // =======================
 app.get("/posts/:postId/comments", async (req, res) => {
   try {
@@ -316,7 +417,7 @@ app.delete("/comments/:commentId", verifyToken, async (req, res) => {
 
 
 // =======================
-//  Admin (Giữ nguyên)
+//  Admin
 // =======================
 app.get("/admin/posts", verifyToken, verifyAdmin, async (req, res) => {
   const pending = await Post.find({ approved: false })

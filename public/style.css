@@ -553,3 +553,116 @@ h1 {
     }
 }
 
+/* =================================== */
+/* REGISTER PAGE (register.html) */
+/* =================================== */
+
+.form-body {
+  font-family: "Segoe UI", sans-serif;
+  background: var(--bg-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.form-container {
+  background: white;
+  padding: 25px 35px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light);
+  width: 320px;
+  text-align: center;
+}
+
+.form-container h1 {
+  color: var(--primary-color);
+  font-size: 22px;
+  margin-bottom: 15px;
+}
+
+.form-container input {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.form-container button {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 5px;
+  transition: background 0.3s;
+}
+
+.form-container button:hover {
+  background: var(--primary-hover);
+}
+
+.form-container p {
+  margin-top: 10px;
+  color: var(--text-light);
+}
+
+#message {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--danger-color);
+}
+
+#otp-section {
+  margin-top: 8px;
+}
+/* =================================== */
+/* (MỚI) HỖ TRỢ ĐĂNG KÝ 2 BƯỚC + INPUT ICONS */
+/* =================================== */
+
+/* Ẩn/Hiện bước */
+.hidden {
+    display: none !important;
+}
+
+/* Container cho input có icon */
+.input-group {
+    position: relative;
+    width: 100%;
+    margin: 8px 0; /* Đồng bộ hóa với input thường */
+}
+
+.input-group input {
+    /* Đảm bảo input chiếm toàn bộ chiều rộng, trừ icon */
+    width: 100%;
+    padding: 10px;
+    padding-right: 40px; 
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+/* Icon Show/Hide Password */
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    user-select: none; /* Ngăn chọn văn bản khi click */
+    font-size: 1.1rem;
+    transition: color 0.2s;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color);
+}
+
