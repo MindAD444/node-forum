@@ -9,9 +9,13 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import cors from "cors";
 import path from "path";
-import fs from "fs-extra";
+// import fs from "fs-extra"; // KHÔNG CẦN NỮA
 import multer from "multer";
 import { fileURLToPath } from "url";
+// THÊM: Cloudinary imports
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+
 
 dotenv.config();
 const app = express();
@@ -24,6 +28,16 @@ app.use(express.urlencoded({ extended: true }));
 // =======================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// =======================
+//  Cấu hình Cloudinary
+// =======================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 
 // =======================
 //  MongoDB
@@ -88,25 +102,48 @@ function verifyAdmin(req, res, next) {
 }
 
 // =======================
-//  Upload files (multer)
+//  Upload files (Cloudinary)
 // =======================
-fs.ensureDirSync("uploads");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "forum_uploads", // Thư mục trên Cloudinary
+    allowed_formats: ["jpg", "jpeg", "png", "gif", "pdf", "docx"], 
+    resource_type: "auto", // Quan trọng cho cả ảnh và file
+  },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // Giới hạn 10MB
 });
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// KHÔNG CẦN app.use("/uploads", express.static...) nữa
+// =======================
+//  Hàm tiện ích
+// =======================
+/**
+ * Trích xuất public_id từ URL của Cloudinary để xóa file.
+ * Cloudinary URL: https://res.cloudinary.com/.../v1600000000/forum_uploads/filename.jpg
+ * public_id: forum_uploads/filename
+ */
+const extractPublicId = (url) => {
+    try {
+        const parts = url.split('/');
+        // Bắt đầu từ thư mục chính đã định nghĩa ('forum_uploads')
+        const startIndex = parts.indexOf('forum_uploads');
+        if (startIndex === -1) return null;
+        
+        const publicIdWithExtension = parts.slice(startIndex).join('/');
+        return publicIdWithExtension.split('.')[0]; // Xóa đuôi file
+    } catch (e) {
+        console.error("Lỗi khi trích xuất publicId:", e);
+        return null;
+    }
+};
 
 // =======================
-//  Routes: Auth
+//  Routes: Auth (Giữ nguyên)
 // =======================
 app.get("/me", verifyToken, async (req, res) => {
   try {
@@ -117,7 +154,6 @@ app.get("/me", verifyToken, async (req, res) => {
     res.status(500).json({ error: "Lỗi server" });
   }
 });
-
 
 app.post("/register", async (req, res) => {
   try {
@@ -166,9 +202,14 @@ app.get("/posts", async (req, res) => {
 app.post("/posts", verifyToken, upload.array("files", 5), async (req, res) => {
   try {
     const { title, content } = req.body;
-    if (!title || !content)
-      return res.status(400).json({ message: "Thiếu tiêu đề hoặc nội dung" });
-    const filePaths = req.files.map((f) => `/uploads/${f.filename}`);
+    if (!title || !content) {
+        // Tùy chọn: Xóa các file đã upload nếu form bị lỗi (phức tạp)
+        return res.status(400).json({ message: "Thiếu tiêu đề hoặc nội dung" });
+    }
+    
+    // THAY ĐỔI: Lấy URL công khai từ Cloudinary
+    const filePaths = req.files.map((f) => f.path); 
+    
     const newPost = new Post({
       title,
       content,
@@ -197,11 +238,17 @@ app.delete("/posts/:id", verifyToken, async (req, res) => {
     await Comment.deleteMany({ post: req.params.id }); 
 
     await Post.findByIdAndDelete(req.params.id);
+    
+    // THAY ĐỔI: Xóa files trên Cloudinary
     if (post.files && post.files.length > 0) {
-        post.files.forEach(async (filePath) => {
-            const fullPath = path.join(__dirname, filePath);
-            await fs.remove(fullPath); 
-        });
+        for (const filePath of post.files) {
+            const publicId = extractPublicId(filePath);
+            if (publicId) {
+                // Tùy chọn: Xác định resource_type nếu bạn dùng cả video/raw file
+                await cloudinary.uploader.destroy(publicId, { resource_type: "raw" }).catch(() => {});
+                await cloudinary.uploader.destroy(publicId, { resource_type: "image" }).catch(() => {});
+            }
+        }
     }
 
     res.json({ message: "Đã xóa bài viết thành công" });
@@ -213,7 +260,7 @@ app.delete("/posts/:id", verifyToken, async (req, res) => {
 
 
 // =======================
-//  Routes: Comments
+//  Routes: Comments (Giữ nguyên)
 // =======================
 app.get("/posts/:postId/comments", async (req, res) => {
   try {
@@ -269,7 +316,7 @@ app.delete("/comments/:commentId", verifyToken, async (req, res) => {
 
 
 // =======================
-//  Admin
+//  Admin (Giữ nguyên)
 // =======================
 app.get("/admin/posts", verifyToken, verifyAdmin, async (req, res) => {
   const pending = await Post.find({ approved: false })
@@ -290,10 +337,9 @@ app.delete("/admin/post/:id", verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // ===============================================
-//  Phục vụ File Tĩnh và Trang Chủ (ĐÃ SỬA CHO THƯ MỤC PUBLIC) 🎯
+//  Phục vụ File Tĩnh (Thư mục PUBLIC)
 // ===============================================
 
-// Express sẽ tự động tìm index.html trong thư mục public và phục vụ nó khi truy cập gốc '/'
 app.use(express.static(path.join(__dirname, "public"))); 
 
 // =======================
