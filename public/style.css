@@ -456,3 +456,100 @@ h1 {
 
 }
 
+/* =================================== */
+/* LANDING PAGE STYLES (index.html) */
+/* =================================== */
+
+.landing-body {
+    /* Thiết lập background toàn màn hình */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding-top: 0; 
+    background: linear-gradient(135deg, #007bff 0%, #1e40af 100%); /* Blue gradient */
+}
+
+.landing-container {
+    width: 90%;
+    max-width: 600px;
+    background-color: white;
+    padding: 3rem;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.landing-container h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    border-bottom: none; 
+    padding-bottom: 0;
+}
+
+.landing-container p {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+
+.btn-get-started {
+    display: inline-block;
+    background-color: var(--danger-color); /* Màu đỏ nổi bật */
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.5);
+}
+
+.btn-get-started:hover {
+    background-color: #b91c1c; /* Đỏ đậm hơn */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(220, 38, 38, 0.7);
+}
+
+.landing-footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+    font-size: 0.95rem;
+}
+
+.landing-footer p {
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+}
+
+.landing-footer a {
+    color: var(--primary-color); 
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.landing-footer a:hover {
+    text-decoration: underline;
+    color: var(--primary-hover);
+}
+
+/* Responsive adjustment for landing page */
+@media (max-width: 768px) {
+    .landing-container {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+    .landing-container h1 {
+        font-size: 2rem;
+    }
+    .btn-get-started {
+        padding: 0.6rem 1.5rem;
+        font-size: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+

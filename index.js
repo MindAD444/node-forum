@@ -1,5 +1,5 @@
 // =======================
-// Forum Server Backend (ESM)
+//  Forum Server Backend (ESM)
 // =======================
 
 import express from "express";
@@ -20,22 +20,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // =======================
-// __dirname cho ESM
+//  __dirname cho ESM
 // =======================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // =======================
-// MongoDB
+//  MongoDB
 // =======================
-// Sử dụng fallback nếu MONGO_URI không có
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/forumdb") 
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("MongoDB error:", err));
 
 // =======================
-// Schema
+//  Schema
 // =======================
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
@@ -48,27 +47,25 @@ const postSchema = new mongoose.Schema({
   content: String,
   files: [String],
   approved: { type: Boolean, default: false },
-  // Thêm trường tham chiếu đến User làm tác giả
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+  createdAt: { type: Date, default: Date.now },
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } 
+});
+
+const commentSchema = new mongoose.Schema({
+  content: String,
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
   createdAt: { type: Date, default: Date.now },
 });
 
-// Thêm Schema cho Bình luận
-const commentSchema = new mongoose.Schema({
-  content: { type: String, required: true },
-  post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  createdAt: { type: Date, default: Date.now },
-});
 
 const User = mongoose.model("User", userSchema);
 const Post = mongoose.model("Post", postSchema);
-// Định nghĩa Model Comment
 const Comment = mongoose.model("Comment", commentSchema);
 
 
 // =======================
-// Middleware xác thực
+//  Middleware xác thực
 // =======================
 function verifyToken(req, res, next) {
   const token = req.headers["authorization"]?.split(" ")[1];
@@ -91,7 +88,7 @@ function verifyAdmin(req, res, next) {
 }
 
 // =======================
-// Upload files (multer)
+//  Upload files (multer)
 // =======================
 fs.ensureDirSync("uploads");
 
@@ -109,17 +106,27 @@ const upload = multer({
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // =======================
-// Routes: Auth
+//  Routes: Auth
 // =======================
+app.get("/me", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi server" });
+  }
+});
+
+
 app.post("/register", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, isAdmin } = req.body;
     const existing = await User.findOne({ username });
     if (existing)
       return res.status(400).json({ message: "Tên người dùng đã tồn tại" });
     const hashed = await bcrypt.hash(password, 10);
-    // Luôn tạo user với isAdmin: false
-    await new User({ username, password: hashed, isAdmin: false }).save(); 
+    await new User({ username, password: hashed, isAdmin: !!isAdmin }).save();
     res.json({ message: "Đăng ký thành công" });
   } catch (err) {
     res.status(500).json({ error: "Lỗi server khi đăng ký" });
@@ -147,30 +154,11 @@ app.post("/login", async (req, res) => {
 });
 
 // =======================
-// Routes: Get Current User
-// =======================
-app.get("/me", verifyToken, async (req, res) => {
-  try {
-    // Tìm user bằng ID từ token và loại bỏ password
-    const user = await User.findById(req.user.id).select("-password"); 
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng" });
-    }
-    // Trả về thông tin user (bao gồm _id, username, isAdmin)
-    res.json(user); 
-  } catch (err) {
-    res.status(500).json({ error: "Lỗi server" });
-  }
-});
-
-
-// =======================
-// Routes: Posts
+//  Routes: Posts
 // =======================
 app.get("/posts", async (req, res) => {
-  // Thêm populate('author', 'username') để lấy tên tác giả
   const posts = await Post.find({ approved: true })
-    .populate('author', 'username') 
+    .populate('author', 'username')
     .sort({ createdAt: -1 });
   res.json(posts);
 });
@@ -186,7 +174,6 @@ app.post("/posts", verifyToken, upload.array("files", 5), async (req, res) => {
       content,
       files: filePaths,
       approved: false,
-      // Lưu ID của người đăng bài làm tác giả
       author: req.user.id, 
     });
     await newPost.save();
@@ -197,29 +184,27 @@ app.post("/posts", verifyToken, upload.array("files", 5), async (req, res) => {
   }
 });
 
-// Route xóa bài viết (Admin hoặc Tác giả)
 app.delete("/posts/:id", verifyToken, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ message: "Không tìm thấy bài viết" });
+    if (!post) return res.status(404).json({ message: "Không tìm thấy bài viết" });
+
+    const canDelete = req.user.isAdmin || post.author.toString() === req.user.id;
+    if (!canDelete) {
+      return res.status(403).json({ message: "Bạn không có quyền xóa bài viết này" });
     }
 
-    const user = req.user;
+    await Comment.deleteMany({ post: req.params.id }); 
 
-    // Kiểm tra quyền: Hoặc là admin, HOẶC là tác giả bài viết
-    if (user.isAdmin || post.author.toString() === user.id) {
-      await Post.findByIdAndDelete(req.params.id);
-      
-      // Xóa tất cả comment của bài viết này
-      await Comment.deleteMany({ post: req.params.id }); 
-
-      return res.json({ message: "Đã xóa bài viết thành công" });
+    await Post.findByIdAndDelete(req.params.id);
+    if (post.files && post.files.length > 0) {
+        post.files.forEach(async (filePath) => {
+            const fullPath = path.join(__dirname, filePath);
+            await fs.remove(fullPath); 
+        });
     }
 
-    // Nếu không có quyền
-    return res.status(403).json({ message: "Bạn không có quyền xóa bài viết này" });
-
+    res.json({ message: "Đã xóa bài viết thành công" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi server khi xóa bài" });
@@ -228,66 +213,54 @@ app.delete("/posts/:id", verifyToken, async (req, res) => {
 
 
 // =======================
-// Routes: Comments
+//  Routes: Comments
 // =======================
-
-// Lấy tất cả bình luận của 1 bài viết
-app.get("/posts/:id/comments", async (req, res) => {
+app.get("/posts/:postId/comments", async (req, res) => {
   try {
-    const comments = await Comment.find({ post: req.params.id })
-      .populate('author', 'username') // Lấy username của tác giả comment
-      .sort('createdAt');
+    const comments = await Comment.find({ post: req.params.postId })
+      .populate('author', 'username') 
+      .sort({ createdAt: 1 });
     res.json(comments);
   } catch (err) {
     res.status(500).json({ error: "Lỗi server khi tải bình luận" });
   }
 });
 
-// Đăng bình luận mới
-app.post("/posts/:id/comments", verifyToken, async (req, res) => {
+app.post("/posts/:postId/comments", verifyToken, async (req, res) => {
   try {
     const { content } = req.body;
-    if (!content) {
-      return res.status(400).json({ message: "Nội dung bình luận không được trống" });
-    }
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json({ message: "Không tìm thấy bài viết" });
 
     const newComment = new Comment({
-      content: content,
-      post: req.params.id,
-      author: req.user.id
+      content,
+      post: req.params.postId,
+      author: req.user.id,
     });
-
     await newComment.save();
     
-    // Trả về bình luận mới đã populate để hiển thị ngay
-    const populatedComment = await Comment.findById(newComment._id)
-                                    .populate('author', 'username');
+    const populatedComment = await Comment.findById(newComment._id).populate('author', 'username');
 
     res.status(201).json(populatedComment);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Lỗi server khi đăng bình luận" });
   }
 });
 
-// Route xóa bình luận (Admin hoặc Tác giả)
-app.delete("/comments/:id", verifyToken, async (req, res) => {
+app.delete("/comments/:commentId", verifyToken, async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.id);
-    if (!comment) {
-      return res.status(404).json({ message: "Không tìm thấy bình luận" });
+    const comment = await Comment.findById(req.params.commentId).populate('author', 'username');
+    if (!comment) return res.status(404).json({ message: "Không tìm thấy bình luận" });
+
+    const canDelete = req.user.isAdmin || comment.author._id.toString() === req.user.id;
+    
+    if (!canDelete) {
+      return res.status(403).json({ message: "Bạn không có quyền xóa bình luận này" });
     }
 
-    const user = req.user;
-
-    // Kiểm tra quyền: Hoặc là admin, HOẶC là tác giả bình luận
-    if (user.isAdmin || comment.author.toString() === user.id) {
-      await Comment.findByIdAndDelete(req.params.id);
-      return res.json({ message: "Đã xóa bình luận thành công" });
-    }
-
-    // Nếu không có quyền
-    return res.status(403).json({ message: "Bạn không có quyền xóa bình luận này" });
-
+    await Comment.findByIdAndDelete(req.params.commentId);
+    res.json({ message: "Đã xóa bình luận thành công" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi server khi xóa bình luận" });
@@ -296,10 +269,9 @@ app.delete("/comments/:id", verifyToken, async (req, res) => {
 
 
 // =======================
-// Admin
+//  Admin
 // =======================
 app.get("/admin/posts", verifyToken, verifyAdmin, async (req, res) => {
-  // Thêm populate('author', 'username')
   const pending = await Post.find({ approved: false })
     .populate('author', 'username')
     .sort({ createdAt: -1 });
@@ -311,11 +283,18 @@ app.put("/admin/post/:id", verifyToken, verifyAdmin, async (req, res) => {
   res.json({ message: "Đã duyệt bài" });
 });
 
+app.delete("/admin/post/:id", verifyToken, verifyAdmin, async (req, res) => {
+  const post = await Post.findByIdAndDelete(req.params.id);
+  await Comment.deleteMany({ post: req.params.id }); 
+  res.json({ message: "Đã xóa bài viết" });
+});
 
-// =======================
-// Public
-// =======================
-app.use(express.static(path.join(__dirname, "public")));
+// ===============================================
+//  Phục vụ File Tĩnh và Trang Chủ (ĐÃ SỬA CHO THƯ MỤC PUBLIC) 🎯
+// ===============================================
+
+// Express sẽ tự động tìm index.html trong thư mục public và phục vụ nó khi truy cập gốc '/'
+app.use(express.static(path.join(__dirname, "public"))); 
 
 // =======================
 const PORT = process.env.PORT || 3000;

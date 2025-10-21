@@ -9,8 +9,7 @@
 <body>
   <nav class="navbar">
     <div class="nav-right">
-      <a href="index.html">Trang chủ</a>
-      <a href="register.html">Đăng ký</a>
+      <a href="home.html">Trang chủ</a> <a href="register.html">Đăng ký</a>
     </div>
   </nav>
 
@@ -24,7 +23,6 @@
     <p id="message"></p>
   </main>
 
-  <script src="app.js"></script>
   <script>
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -42,7 +40,7 @@
         localStorage.setItem("username", username);
         localStorage.setItem("role", tokenParts.role || "");
         localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
-        window.location.href = "index.html";
+        window.location.href = "home.html"; // Đã cập nhật
       } else {
         document.getElementById("message").textContent = data.error || "Đăng nhập thất bại.";
       }
@@ -50,3 +48,4 @@
   </script>
 </body>
 </html>
+
