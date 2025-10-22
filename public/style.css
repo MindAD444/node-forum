@@ -176,13 +176,22 @@ body {
   margin-bottom: 20px;
 }
 
+/* Thêm CSS cho input-group để chứa nút toggle */
+.input-group {
+    position: relative; /* Quan trọng để định vị nút */
+    margin: 10px 0; /* Khoảng cách giữa các trường */
+    width: 100%;
+}
+
 .form-container input {
   width: 100%;
-  margin: 10px 0; 
+  /* Bỏ margin cũ vì đã chuyển sang input-group */
+  /* margin: 10px 0; */ 
   padding: 12px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   font-size: 15px;
+  padding-right: 40px; /* Thêm khoảng trống cho nút toggle */
 }
 
 .form-container button {
@@ -213,6 +222,25 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* Định vị và kiểu dáng cho nút Ẩn/Hiện Mật khẩu */
+.toggle-password {
+    position: absolute;
+    top: 50%; /* Căn giữa dọc */
+    right: 10px; /* Cách mép phải 10px */
+    transform: translateY(-50%); /* Căn giữa dọc chính xác */
+    cursor: pointer;
+    user-select: none; 
+    font-size: 1.1em;
+    color: var(--text-light);
+    transition: color 0.2s;
+    z-index: 5; /* Đảm bảo nó nằm trên input */
+}
+
+.toggle-password:hover {
+    color: var(--primary-color);
+}
+
 
 /* =================================== */
 /* BÌNH LUẬN */

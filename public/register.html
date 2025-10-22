@@ -20,8 +20,16 @@
     <form id="register-request-form">
       <input type="text" id="username" placeholder="Tên đăng nhập" required />
       <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Mật khẩu (Tối thiểu 6 ký tự)" required minlength="6"/>
-      <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required minlength="6"/>
+      
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Mật khẩu (Tối thiểu 6 ký tự)" required minlength="6"/>
+        <span class="toggle-password" data-target="password">👁️</span>
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required minlength="6"/>
+        <span class="toggle-password" data-target="confirm-password">👁️</span>
+      </div>
       
       <button type="submit">Gửi mã xác thực</button>
     </form>
@@ -49,7 +57,7 @@
             const username = document.getElementById("username").value.trim();
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
-            const confirmPassword = document.getElementById("confirm-password").value.trim(); // Lấy giá trị mới
+            const confirmPassword = document.getElementById("confirm-password").value.trim(); 
             
             // KIỂM TRA MẬT KHẨU KHỚP NHAU
             if (password !== confirmPassword) {
@@ -142,6 +150,20 @@
                 messageEl.textContent = "Lỗi server. Vui lòng thử lại.";
                 document.getElementById("resend-code-btn").disabled = false;
             }
+        });
+
+        // Logic Ẩn/Hiện Mật khẩu (Cho cả 2 trường)
+        document.querySelectorAll('.toggle-password').forEach(toggleBtn => {
+            toggleBtn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
+                this.textContent = type === 'text' ? '🔒' : '👁️';
+            });
         });
     });
   </script>

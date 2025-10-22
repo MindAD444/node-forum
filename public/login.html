@@ -18,7 +18,12 @@
     <h1>Đăng nhập</h1>
     <form id="login-form">
       <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/> 
-      <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
+      
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
+        <span class="toggle-password" data-target="password">👁️</span>
+      </div>
+      
       <button type="submit">Đăng nhập</button>
     </form>
     <p id="message"></p>
@@ -57,6 +62,18 @@
       } catch (err) {
           document.getElementById("message").textContent = "Lỗi kết nối server.";
       }
+    });
+
+    // Logic Ẩn/Hiện Mật khẩu
+    document.querySelector('.toggle-password').addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const passwordInput = document.getElementById(targetId);
+        
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
+        this.textContent = type === 'text' ? '🔒' : '👁️';
     });
   </script>
 </body>
