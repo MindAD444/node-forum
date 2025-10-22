@@ -17,72 +17,46 @@
   <main class="form-container">
     <h1>Đăng nhập</h1>
     <form id="login-form">
-      <input type="text" id="login-id" placeholder="Tên đăng nhập hoặc Email" required />
-      
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Mật khẩu" required />
-        <span class="password-toggle" data-target="password">👁️</span>
-      </div>
-
+      <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/> 
+      <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
       <button type="submit">Đăng nhập</button>
     </form>
     <p id="message"></p>
   </main>
 
   <script>
-    function setupPasswordToggle() {
-        document.querySelectorAll('.password-toggle').forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                const targetId = toggle.getAttribute('data-target');
-                const targetInput = document.getElementById(targetId);
-                if (targetInput.type === 'password') {
-                    targetInput.type = 'text';
-                    toggle.textContent = '🔒'; 
-                } else {
-                    targetInput.type = 'password';
-                    toggle.textContent = '👁️'; 
-                }
-            });
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", setupPasswordToggle);
-
     document.getElementById("login-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const loginId = document.getElementById("login-id").value.trim(); // Có thể là username hoặc email
-        const password = document.getElementById("password").value.trim();
-        const messageEl = document.getElementById("message");
-        messageEl.textContent = "Đang đăng nhập...";
-        
-        // Hiện tại, Frontend vẫn gửi key là "username" và Backend phải tự xử lý
-        // logic OR (username HOẶC email).
-        // Nếu Backend chưa được cập nhật, logic này sẽ chỉ tìm kiếm theo username.
-        
-        try {
-            const res = await fetch("/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: loginId, password: password }) 
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                const tokenParts = JSON.parse(atob(data.token.split('.')[1]));
-                localStorage.setItem("token", data.token);
-                // Giả định backend trả về username đã đăng nhập
-                const userInfo = await (await fetch('/me', { headers: { 'Authorization': `Bearer ${data.token}` }})).json();
-                localStorage.setItem("username", userInfo.username); 
-                localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
-                
-                messageEl.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
-                setTimeout(() => window.location.href = "home.html", 1000); 
-            } else {
-                messageEl.textContent = data.message || "Tên người dùng/Email hoặc mật khẩu không đúng.";
-            }
-        } catch (error) {
-            messageEl.textContent = "Lỗi kết nối server.";
-        }
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      
+      document.getElementById("message").textContent = "Đang đăng nhập...";
+
+      try {
+          const res = await fetch("/auth/login", { 
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+          
+          if (res.ok) {
+              // Phân tích token để lấy thông tin user (đã được tối ưu ở Backend)
+              const tokenParts = JSON.parse(atob(data.token.split('.')[1]));
+              
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("username", data.user.username);
+              localStorage.setItem("role", tokenParts.role || "user");
+              localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
+              localStorage.setItem("userId", data.user.id); // LƯU USER ID
+
+              window.location.href = "index.html";
+          } else {
+              document.getElementById("message").textContent = data.error || "Đăng nhập thất bại.";
+          }
+      } catch (err) {
+          document.getElementById("message").textContent = "Lỗi kết nối server.";
+      }
     });
   </script>
 </body>

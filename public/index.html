@@ -3,21 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chào mừng đến với Forum</title>
+  <title>Forum - Trang chủ</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="landing-body">
-  <main class="landing-container">
-    <div class="landing-content">
-      <h1>Chào mừng đến với Cộng đồng của chúng tôi</h1>
-      <p>Nơi chia sẻ kiến thức, kinh nghiệm và kết nối với những người cùng đam mê.</p>
-      <a href="login.html" class="btn-get-started">BẮT ĐẦU NGAY</a>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <span id="username-display"></span>
     </div>
-    <div class="landing-footer">
-      <p>Chưa có tài khoản?</p>
-      <a href="register.html">Đăng ký tại đây!</a>
+    <div class="nav-right">
+      <a href="index.html">Trang chủ</a>
+      <a href="create.html" id="create-link" class="hidden">Đăng bài</a>
+      <a href="admin.html" id="admin-link" class="hidden">Quản trị</a>
+      <a href="login.html" id="login-link">Đăng nhập</a>
+      <a href="register.html" id="register-link">Đăng ký</a>
+      <button id="logout-btn" class="btn-danger hidden">Đăng xuất</button>
     </div>
+  </nav>
+
+  <main class="container">
+    <h1>📜 Danh sách bài viết</h1>
+    <div id="posts" class="post-list">Đang tải...</div>
   </main>
+
+  <script>
+    let currentUser = null; 
+
+    document.addEventListener("DOMContentLoaded", () => {
+      checkLoginStatus(); 
+      loadPosts(); 
+      document.getElementById("logout-btn").addEventListener("click", logout);
+    });
+
+    // --- LOGIC AUTH ---
+    function checkLoginStatus() {
+      const token = localStorage.getItem("token");
+      const username = localStorage.getItem("username");
+      const isAdmin = localStorage.getItem("isAdmin") === 'true';
+      const userId = localStorage.getItem("userId"); 
+
+      if (token && username) {
+        document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
+        document.getElementById("login-link").classList.add("hidden");
+        document.getElementById("register-link").classList.add("hidden");
+        document.getElementById("logout-btn").classList.remove("hidden");
+        document.getElementById("create-link").classList.remove("hidden");
+        
+        currentUser = {
+            _id: userId,
+            username: username,
+            isAdmin: isAdmin
+        };
+
+        if (isAdmin) {
+          document.getElementById("admin-link").classList.remove("hidden");
+        } else {
+          document.getElementById("admin-link").classList.add("hidden");
+        }
+      } 
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.reload();
+    }
+    
+    // --- LOGIC BÀI VIẾT (TỐI ƯU DOM MANIPULATION) ---
+    async function loadPosts() {
+      try {
+        const res = await fetch("/posts");
+        const posts = await res.json();
+        const container = document.getElementById("posts");
+        
+        if (!posts.length) {
+          container.innerHTML = "<p>Chưa có bài viết nào được duyệt.</p>";
+          return;
+        }
+
+        const postHTML = posts.map(post => {
+            let fileHTML = "";
+            if (post.files && post.files.length > 0) {
+                fileHTML = `<div class="file-section"><strong>📎 Tệp đính kèm:</strong><br>`;
+                post.files.forEach(f => {
+                    const ext = f.split('.').pop().toLowerCase();
+                    if (["jpg","jpeg","png","gif"].includes(ext)) {
+                        fileHTML += `<img src="${f}" class="post-image" alt="file" loading="lazy" />`;
+                    } else {
+                        fileHTML += `<a href="${f}" target="_blank" rel="noopener noreferrer">${f.split("/").pop()}</a><br>`;
+                    }
+                });
+                fileHTML += `</div>`;
+            }
+            
+            const canDelete = currentUser && 
+                              (currentUser.isAdmin || currentUser._id === post.author?._id);
+            const deleteButton = canDelete 
+                                ? `<button class="delete-post-btn" data-id="${post._id}">🗑️ Xóa bài</button>` 
+                                : '';
+
+            return `
+                <div class="post-card" data-post-id="${post._id}">
+                    <h2>${post.title}</h2>
+                    <p class="post-content">${post.content}</p>
+                    ${fileHTML}
+                    <div class="post-meta">
+                        👤 <b>${post.author?.username || "Ẩn danh"}</b>
+                        &nbsp;•&nbsp; 🕓 ${new Date(post.createdAt).toLocaleString()}
+                        ${deleteButton}
+                    </div>
+                    <div id="comments-for-${post._id}" class="comment-section">
+                        <button class="load-comments-btn" data-post-id="${post._id}">Xem/Đăng bình luận</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = postHTML;
+        setupPostEventListeners(); 
+
+      } catch(err) {
+        console.error("Lỗi khi tải bài viết:", err);
+        document.getElementById("posts").innerHTML = "<p>Lỗi khi tải bài viết.</p>";
+      }
+    }
+    
+    function setupPostEventListeners() {
+        // --- XỬ LÝ NÚT XÓA BÀI VIẾT ---
+        document.querySelectorAll('.delete-post-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const postId = e.target.dataset.id;
+                deletePost(postId);
+            });
+        });
+
+        // --- XỬ LÝ NÚT TẢI BÌNH LUẬN ---
+        document.querySelectorAll('.load-comments-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const postId = e.target.dataset.postId;
+                const commentSection = document.getElementById(`comments-for-${postId}`);
+                if (commentSection.classList.contains('active')) {
+                    // Đóng bình luận
+                    commentSection.innerHTML = `<button class="load-comments-btn" data-post-id="${postId}">Xem/Đăng bình luận</button>`;
+                    commentSection.classList.remove('active');
+                    setupPostEventListeners(); 
+                } else {
+                    // Mở bình luận
+                    commentSection.classList.add('active');
+                    loadCommentSection(postId, commentSection);
+                }
+            });
+        });
+    }
+
+    async function deletePost(postId) {
+        if (!confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+        
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`/posts/${postId}`, { 
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("Xóa bài viết thành công!");
+                loadPosts(); 
+            } else {
+                alert(data.error || "Lỗi khi xóa bài viết.");
+            }
+        } catch (err) {
+            alert("Lỗi server.");
+        }
+    }
+
+    // --- LOGIC BÌNH LUẬN ---
+    async function loadCommentSection(postId, container) {
+        container.innerHTML = '<h4>Bình luận</h4><div class="comment-list" id="comment-list-' + postId + '">Đang tải bình luận...</div>';
+        
+        try {
+            const res = await fetch(`/comments/${postId}`);
+            const comments = await res.json();
+            
+            const listContainer = document.getElementById(`comment-list-${postId}`);
+            
+            const commentHTML = comments.map(c => renderComment(c)).join('');
+            listContainer.innerHTML = comments.length === 0 
+                ? '<p>Chưa có bình luận nào.</p>' 
+                : commentHTML;
+            
+            setupCommentEventListeners(postId);
+            
+            if (currentUser) {
+                container.insertAdjacentHTML('beforeend', renderCommentForm(postId));
+                setupCommentFormListener(postId);
+            }
+
+        } catch (err) {
+            container.innerHTML = '<p>Lỗi khi tải bình luận.</p>';
+        }
+    }
+    
+    function renderComment(comment) {
+        const canDelete = currentUser && 
+                          (currentUser.isAdmin || currentUser._id === comment.author._id);
+        const deleteButton = canDelete 
+                            ? `<button class="delete-btn comment-delete-btn" data-id="${comment._id}" data-post-id="${comment.post}">Xóa</button>` 
+                            : '';
+                            
+        return `
+            <div class="comment-item" id="comment-${comment._id}">
+                <p><b>${comment.author?.username || "Ẩn danh"}</b>: ${comment.content}</p>
+                <div class="comment-meta">
+                    <span>${new Date(comment.createdAt).toLocaleString()}</span>
+                    ${deleteButton}
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderCommentForm(postId) {
+        return `
+            <form class="comment-form" data-post-id="${postId}">
+                <textarea name="content" placeholder="Viết bình luận của bạn..." required></textarea>
+                <button type="submit">Đăng bình luận</button>
+            </form>
+        `;
+    }
+
+    function setupCommentFormListener(postId) {
+        const form = document.querySelector(`.comment-form[data-post-id="${postId}"]`);
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = form.querySelector('textarea').value.trim();
+            if (!content) return;
+
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`/comments/${postId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                const newComment = await res.json();
+                if (res.ok) {
+                    const listContainer = document.getElementById(`comment-list-${postId}`);
+                    // Nếu danh sách rỗng, xóa thông báo "Chưa có bình luận"
+                    if (listContainer.innerHTML.includes('Chưa có bình luận')) {
+                        listContainer.innerHTML = '';
+                    }
+                    listContainer.insertAdjacentHTML('beforeend', renderComment(newComment));
+                    form.querySelector('textarea').value = ''; 
+                    setupCommentEventListeners(postId); 
+                } else {
+                    alert(newComment.error || "Lỗi khi đăng bình luận");
+                }
+            } catch (err) {
+                alert("Lỗi server khi đăng bình luận.");
+            }
+        });
+    }
+    
+    function setupCommentEventListeners(postId) {
+        document.querySelectorAll(`#comment-list-${postId} .comment-delete-btn`).forEach(button => {
+            button.addEventListener('click', (e) => {
+                const commentId = e.target.dataset.id;
+                deleteComment(commentId, postId);
+            });
+        });
+    }
+
+    async function deleteComment(commentId, postId) {
+      if (!confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
+      
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`/comments/${commentId}`, { 
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById(`comment-${commentId}`).remove();
+          // Kiểm tra nếu xóa hết thì hiển thị thông báo
+          const listContainer = document.getElementById(`comment-list-${postId}`);
+          if (listContainer.children.length === 0) {
+              listContainer.innerHTML = '<p>Chưa có bình luận nào.</p>';
+          }
+        } else {
+          alert(data.error || "Lỗi khi xóa bình luận");
+        }
+      } catch (err) {
+        alert("Lỗi server.");
+      }
+    }
+  </script>
 </body>
 </html>
 

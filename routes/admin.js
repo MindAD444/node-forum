@@ -1,8 +1,10 @@
-const express = require('express');
+import express from 'express';
+import Post from '../models/Post.js';
+import User from '../models/User.js';
+import Comment from '../models/Comment.js'; 
+import auth from '../middleware/auth.js';
+
 const router = express.Router();
-const Post = require('../models/Post');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
 
 // Lấy tất cả bài viết chờ duyệt
 router.get('/posts', auth('admin'), async (req, res) => {
@@ -23,11 +25,12 @@ router.put('/post/:id', auth('admin'), async (req, res) => {
   }
 });
 
-// Xóa bài
+// Xóa bài (Đã thêm xóa Comment liên quan)
 router.delete('/post/:id', auth('admin'), async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Đã xóa bài viết' });
+    await Comment.deleteMany({ post: req.params.id }); 
+    res.json({ message: 'Đã xóa bài viết và bình luận liên quan.' });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi server khi xóa bài' });
   }
@@ -35,8 +38,9 @@ router.delete('/post/:id', auth('admin'), async (req, res) => {
 
 // Danh sách người dùng (chỉ admin)
 router.get('/users', auth('admin'), async (req, res) => {
-  const users = await User.find({}, '-password');
+  const users = await User.find({}, '-password').sort('username');
   res.json(users);
 });
 
-module.exports = router;
+export default router;
+

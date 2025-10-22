@@ -9,162 +9,141 @@
 <body>
   <nav class="navbar">
     <div class="nav-right">
-      <a href="index.html">Trang chủ</a>
+      <a href="home.html">Trang chủ</a>
       <a href="login.html">Đăng nhập</a>
     </div>
   </nav>
 
   <main class="form-container">
     <h1>Tạo tài khoản mới</h1>
-    <form id="register-form">
+    
+    <form id="register-request-form">
+      <input type="text" id="username" placeholder="Tên đăng nhập" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Mật khẩu (Tối thiểu 6 ký tự)" required minlength="6"/>
+      <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required minlength="6"/>
       
-      <div id="step-one">
-        <input type="text" id="username" placeholder="Tên đăng nhập" required />
-        <input type="email" id="email" placeholder="Email nhận mã xác thực" required />
-        
-        <div class="input-group">
-            <input type="password" id="password" placeholder="Mật khẩu" required />
-            <span class="password-toggle" data-target="password">👁️</span>
-        </div>
-        
-        <div class="input-group">
-            <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required />
-            <span class="password-toggle" data-target="confirm-password">👁️</span>
-        </div>
-
-        <button type="button" id="request-otp-btn">Gửi mã xác thực</button>
-      </div>
-
-      <div id="step-two" class="hidden">
-        <p>Mã xác thực (OTP) đã được gửi đến email:</p>
-        <p id="display-email" style="font-weight: bold;"></p>
-        <input type="text" id="verification-code" placeholder="Mã xác thực (6 số)" required maxlength="6" />
-        <button type="submit">Hoàn tất đăng ký</button>
-        <button type="button" id="back-btn">Quay lại</button>
-      </div>
-
+      <button type="submit">Gửi mã xác thực</button>
     </form>
+
+    <form id="register-verify-form" class="hidden">
+      <p id="verify-info">Mã xác thực 6 số đã được gửi đến email <strong id="verify-email-display"></strong>. Vui lòng kiểm tra hộp thư.</p>
+      <input type="text" id="verification-code" placeholder="Mã xác thực (OTP) 6 số" required maxlength="6" pattern="\d{6}" title="Mã xác thực phải là 6 chữ số"/>
+      <button type="submit">Xác nhận Đăng ký</button>
+      <button type="button" id="resend-code-btn" class="btn-secondary" style="margin-top: 10px;">Gửi lại mã</button>
+    </form>
+    
     <p id="message"></p>
   </main>
 
   <script>
-    let currentEmail = ""; 
-    const messageEl = document.getElementById("message");
+    document.addEventListener("DOMContentLoaded", () => {
+        const reqForm = document.getElementById("register-request-form");
+        const verifyForm = document.getElementById("register-verify-form");
+        const messageEl = document.getElementById("message");
+        let tempUser = {}; 
 
-    // === Hàm Show/Hide Password (Chung) ===
-    function setupPasswordToggle() {
-        document.querySelectorAll('.password-toggle').forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                const targetId = toggle.getAttribute('data-target');
-                const targetInput = document.getElementById(targetId);
-                if (targetInput.type === 'password') {
-                    targetInput.type = 'text';
-                    toggle.textContent = '🔒'; 
-                } else {
-                    targetInput.type = 'password';
-                    toggle.textContent = '👁️'; 
-                }
-            });
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", setupPasswordToggle);
-
-    document.getElementById("request-otp-btn").addEventListener("click", requestOtp);
-    document.getElementById("register-form").addEventListener("submit", verifyOtp);
-    document.getElementById("back-btn").addEventListener("click", () => {
-        document.getElementById("step-one").classList.remove("hidden");
-        document.getElementById("step-two").classList.add("hidden");
-        messageEl.textContent = "";
-    });
-
-
-    /**
-     * Hàm xử lý yêu cầu gửi mã xác thực (Step 1)
-     */
-    async function requestOtp() {
-      const username = document.getElementById("username").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const confirmPassword = document.getElementById("confirm-password").value;
-      
-      if (!username || !email || !password || !confirmPassword) {
-          messageEl.textContent = "Vui lòng điền đầy đủ thông tin.";
-          return;
-      }
-
-      if (password !== confirmPassword) {
-          messageEl.textContent = "Mật khẩu và Xác nhận mật khẩu không khớp!";
-          return;
-      }
-      
-      if (password.length < 6) {
-          messageEl.textContent = "Mật khẩu phải có ít nhất 6 ký tự.";
-          return;
-      }
-
-      currentEmail = email; 
-      messageEl.textContent = "Đang gửi mã...";
-      document.getElementById("request-otp-btn").disabled = true;
-
-      try {
-          const res = await fetch("/register/request", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password })
-          });
-          
-          const data = await res.json();
-          if (res.ok) {
-            messageEl.textContent = data.message || "Đã gửi mã xác thực. Kiểm tra email của bạn.";
-            document.getElementById("display-email").textContent = currentEmail;
+        // --- Giai đoạn 1: Gửi yêu cầu (Request) ---
+        reqForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const confirmPassword = document.getElementById("confirm-password").value.trim(); // Lấy giá trị mới
             
-            // Chuyển sang Step 2
-            document.getElementById("step-one").classList.add("hidden");
-            document.getElementById("step-two").classList.remove("hidden");
-            document.getElementById("verification-code").focus();
-          } else {
-            messageEl.textContent = data.message || "Lỗi khi gửi mã xác thực. Tên người dùng/Email có thể đã tồn tại.";
-          }
-      } catch (e) {
-          messageEl.textContent = "Lỗi kết nối server.";
-      } finally {
-          document.getElementById("request-otp-btn").disabled = false;
-      }
-    }
+            // KIỂM TRA MẬT KHẨU KHỚP NHAU
+            if (password !== confirmPassword) {
+                messageEl.textContent = "❌ Mật khẩu và xác nhận mật khẩu không khớp.";
+                return;
+            }
 
-    /**
-     * Hàm xử lý xác thực mã OTP và tạo tài khoản (Step 2)
-     */
-    async function verifyOtp(e) {
-      e.preventDefault();
-      const code = document.getElementById("verification-code").value.trim();
+            messageEl.textContent = "Đang gửi yêu cầu và mã xác thực...";
 
-      if (!code || code.length !== 6) {
-          messageEl.textContent = "Mã xác thực phải là 6 chữ số.";
-          return;
-      }
-      
-      messageEl.textContent = "Đang xác minh mã...";
+            try {
+                const res = await fetch("/auth/register/request", { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    // Gửi MẬT KHẨU CHÍNH (đã được kiểm tra khớp)
+                    body: JSON.stringify({ username, email, password }),
+                });
 
-      try {
-          const res = await fetch("/register/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: currentEmail, code })
-          });
-          
-          const data = await res.json();
-          if (res.ok) {
-            messageEl.textContent = "Đăng ký thành công! Đang chuyển hướng...";
-            setTimeout(() => window.location.href = "login.html", 1500);
-          } else {
-            messageEl.textContent = data.message || "Mã xác thực không hợp lệ hoặc đã hết hạn.";
-          }
-      } catch (e) {
-          messageEl.textContent = "Lỗi kết nối server.";
-      }
-    }
+                const data = await res.json();
+                if (res.ok) {
+                    tempUser = { username, email, password };
+                    document.getElementById("verify-email-display").textContent = email;
+                    reqForm.classList.add("hidden");
+                    verifyForm.classList.remove("hidden");
+                    messageEl.textContent = data.message;
+                } else {
+                    messageEl.textContent = data.error || "Lỗi khi gửi mã xác thực.";
+                }
+            } catch {
+                messageEl.textContent = "Lỗi server. Vui lòng thử lại.";
+            }
+        });
+
+        // --- Giai đoạn 2: Xác thực (Verify) & Gửi lại mã (Không thay đổi) ---
+        verifyForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const code = document.getElementById("verification-code").value.trim();
+            
+            if (code.length !== 6) {
+                messageEl.textContent = "Mã xác thực phải có 6 chữ số.";
+                return;
+            }
+
+            messageEl.textContent = "Đang xác nhận mã và tạo tài khoản...";
+
+            try {
+                const res = await fetch("/auth/register/verify", { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: tempUser.email, code }),
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    messageEl.textContent = "✅ Đăng ký thành công! Đang chuyển hướng...";
+                    setTimeout(() => window.location.href = "login.html", 2000);
+                } else {
+                    messageEl.textContent = data.error || "Mã xác thực không đúng hoặc đã hết hạn.";
+                }
+            } catch {
+                messageEl.textContent = "Lỗi server khi tạo tài khoản.";
+            }
+        });
+        
+        document.getElementById("resend-code-btn").addEventListener("click", async () => {
+             const username = tempUser.username;
+             const email = tempUser.email;
+             const password = tempUser.password;
+             
+             messageEl.textContent = "Đang gửi lại mã...";
+             document.getElementById("resend-code-btn").disabled = true;
+
+            try {
+                const res = await fetch("/auth/register/request", { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password }),
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    messageEl.textContent = data.message;
+                    setTimeout(() => {
+                        document.getElementById("resend-code-btn").disabled = false;
+                    }, 60000); // Cho phép gửi lại sau 1 phút
+                } else {
+                    messageEl.textContent = data.error || "Lỗi khi gửi lại mã xác thực.";
+                    document.getElementById("resend-code-btn").disabled = false;
+                }
+            } catch {
+                messageEl.textContent = "Lỗi server. Vui lòng thử lại.";
+                document.getElementById("resend-code-btn").disabled = false;
+            }
+        });
+    });
   </script>
 </body>
 </html>

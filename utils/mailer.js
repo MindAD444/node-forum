@@ -1,32 +1,29 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'gmail', // Hoặc service email của bạn
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
   },
 });
 
-transporter.verify((error, success) => {
-  if (error) console.error('❌ Lỗi SMTP:', error);
-  else console.log('✅ SMTP hoạt động:', success);
-});
+export const sendMail = async (email, code) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Mã xác thực đăng ký Forum',
+    html: `
+      <h2>Xác thực đăng ký tài khoản</h2>
+      <p>Mã xác thực (OTP) của bạn là:</p>
+      <h1 style="color: #007bff; font-size: 30px; letter-spacing: 3px;">${code}</h1>
+      <p>Mã này sẽ hết hạn trong 10 phút.</p>
+    `,
+  };
 
-async function sendVerificationEmail(to, code) {
-  console.log('📨 Gửi mã tới:', to, 'Mã:', code);
-  try {
-    const info = await transporter.sendMail({
-      from: `"Forum" <${process.env.EMAIL_USER}>`,
-      to,
-      subject: 'Mã xác thực tài khoản Forum',
-      text: `Mã xác thực của bạn là ${code}`,
-    });
-    console.log('✅ Email sent:', info.response);
-  } catch (err) {
-    console.error('❌ Lỗi gửi mail:', err);
-    throw err;
-  }
-}
+  await transporter.sendMail(mailOptions);
+};
 
-module.exports = sendVerificationEmail;

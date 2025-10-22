@@ -8,93 +8,106 @@
 </head>
 <body>
   <nav class="navbar">
-    <div class="nav-left"><span id="username-display"></span></div>
     <div class="nav-right">
       <a href="home.html">Trang chủ</a>
-      <button id="logout-btn">Đăng xuất</button>
+      <a href="login.html" id="login-link">Đăng nhập</a>
+      <a href="register.html" id="register-link">Đăng ký</a>
     </div>
   </nav>
 
-  <main class="form-container">
-    <h1>📝 Đăng bài mới</h1>
-    <form id="post-form" enctype="multipart/form-data">
-      <input type="text" id="title" placeholder="Tiêu đề bài viết" required />
-      <textarea id="content" rows="6" placeholder="Nội dung bài viết..." required></textarea>
-
-      <label for="files" class="file-label">Đính kèm tệp (tối đa 5 tệp)</label>
-      <input type="file" id="files" multiple accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-
-      <div id="file-list" class="file-list"></div>
-
-      <button type="submit">Đăng bài</button>
-    </form>
-    <p id="message"></p>
+  <main class="container">
+    <div class="create-post-container">
+        <h1>✍️ Đăng bài viết mới</h1>
+        <form id="create-post-form">
+            <input type="text" id="title" placeholder="Tiêu đề bài viết (Tối đa 100 ký tự)" required maxlength="100"/>
+            
+            <textarea id="content" placeholder="Nội dung bài viết của bạn..." rows="10" required></textarea>
+            
+            <div class="file-upload-area">
+                <label for="files">📎 Tệp đính kèm (Tối đa 5 file, < 5MB/file)</label>
+                <input type="file" id="files" name="files" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple />
+            </div>
+            
+            <button type="submit" id="submit-btn">Gửi bài</button>
+        </form>
+        <p id="message" class="info-message"></p>
+    </div>
   </main>
 
   <script>
-  const filesInput = document.getElementById('files');
-  const fileList = document.getElementById('file-list');
-  filesInput.addEventListener('change', () => {
-    fileList.innerHTML = '';
-    const files = Array.from(filesInput.files);
-    if (files.length === 0) {
-      fileList.textContent = 'Chưa chọn tệp nào.';
-      return;
-    }
-    const ul = document.createElement('ul');
-    files.slice(0, 10).forEach(f => {
-      const li = document.createElement('li');
-      li.textContent = `${f.name} (${Math.round(f.size/1024)} KB)`;
-      ul.appendChild(li);
+    document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+        // Chuyển hướng nếu chưa đăng nhập
+        if (!token) {
+            alert("Bạn cần đăng nhập để đăng bài.");
+            window.location.href = "login.html";
+            return;
+        }
+        
+        document.getElementById("login-link").classList.add("hidden");
+        document.getElementById("register-link").classList.add("hidden");
+
+        document.getElementById("create-post-form").addEventListener("submit", createPost);
     });
-    fileList.appendChild(ul);
-  });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (!localStorage.getItem("token")) {
-      window.location.href = "login.html";
+    async function createPost(e) {
+        e.preventDefault();
+        const title = document.getElementById("title").value.trim();
+        const content = document.getElementById("content").value.trim();
+        const files = document.getElementById("files").files;
+        const messageEl = document.getElementById("message");
+        const submitBtn = document.getElementById("submit-btn");
+
+        if (files.length > 5) {
+            messageEl.textContent = "Bạn chỉ có thể đính kèm tối đa 5 tệp.";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("content", content);
+        
+        for (let i = 0; i < files.length; i++) {
+            // Kiểm tra kích thước file (Giả sử < 5MB)
+            if (files[i].size > 5 * 1024 * 1024) { 
+                 messageEl.textContent = `Tệp "${files[i].name}" quá lớn. Kích thước tối đa là 5MB.`;
+                 return;
+            }
+            formData.append("files", files[i]);
+        }
+        
+        const token = localStorage.getItem("token");
+        messageEl.textContent = "Đang gửi bài viết lên server...";
+        submitBtn.disabled = true;
+
+        try {
+            const res = await fetch("/posts", { 
+                method: "POST",
+                headers: { 
+                    // CHÚ Ý: Không set 'Content-Type' khi dùng FormData, trình duyệt sẽ tự set
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                messageEl.className = "success-message";
+                messageEl.innerHTML = `✅ ${data.message} Vui lòng chờ admin duyệt. <a href="index.html">Quay về trang chủ</a>.`;
+                document.getElementById("create-post-form").reset();
+            } else {
+                messageEl.className = "error-message";
+                messageEl.textContent = data.error || "Lỗi khi đăng bài viết.";
+            }
+        } catch (err) {
+            messageEl.className = "error-message";
+            messageEl.textContent = "Lỗi kết nối server.";
+        } finally {
+            submitBtn.disabled = false;
+        }
     }
-  });
-
-  document.getElementById("post-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const title = document.getElementById("title").value.trim();
-    const content = document.getElementById("content").value.trim();
-    const files = document.getElementById("files").files;
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      document.getElementById("message").textContent = "Bạn cần đăng nhập để đăng bài.";
-      return;
-    }
-
-    const fd = new FormData();
-    fd.append('title', title);
-    fd.append('content', content);
-
-    const MAX_FILES = 5;
-    for (let i = 0; i < files.length && i < MAX_FILES; i++) {
-      fd.append('files', files[i]);
-    }
-
-    try {
-      const res = await fetch('/posts', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: fd
-      });
-      const data = await res.json();
-      if (res.ok) {
-        document.getElementById("message").textContent = "Đăng bài thành công! Chờ duyệt.";
-        document.getElementById("post-form").reset();
-        fileList.innerHTML = '';
-      } else {
-        document.getElementById("message").textContent = data.error || 'Lỗi khi đăng bài.';
-      }
-    } catch (err) {
-      document.getElementById("message").textContent = 'Lỗi kết nối tới server.';
-    }
-  });
   </script>
 </body>
 </html>
+

@@ -1,8 +1,17 @@
-/* style.css */
+/* =================================== */
+/* style.css (TỐI ƯU HÓA) */
+/* =================================== */
+
+/* 1. Thiết lập lại Box Model (tối ưu hóa quan trọng) */
+*, *::before, *::after {
+  box-sizing: border-box; 
+}
+
 :root {
   --primary-color: #007bff;
   --primary-hover: #0056b3;
   --danger-color: #dc2626;
+  --secondary-color: #6c757d;
   --text-color: #333;
   --text-light: #6b7280;
   --bg-color: #f4f4f4;
@@ -16,7 +25,7 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   margin: 0;
-  padding-top: 60px; /* Cho navbar cố định */
+  padding-top: 60px; 
 }
 
 /* =================================== */
@@ -41,158 +50,172 @@ body {
   color: var(--primary-color);
 }
 
-.nav-right a,
-.nav-right button {
-  text-decoration: none;
-  color: var(--text-color);
-  margin-left: 1rem;
-  transition: all 0.2s ease-in-out;
-}
-
-/* =================================== */
-/* NÚT HÀNH ĐỘNG NAVBAR   */
-/* =================================== */
-#login-link, #register-link, #admin-link, #create-link, #logout-btn {
+.nav-right a, .nav-right button {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent; 
+  margin-left: 5px;
 }
 
-#login-link:hover, #register-link:hover, #admin-link:hover, 
-#create-link:hover, #logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow-medium);
-  text-decoration: none;
-}
-
-/* 1. Nút Chính (Đăng nhập, Đăng ký) */
+/* Nút Đăng nhập/Đăng ký */
 #login-link, #register-link {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-  box-shadow: 0 2px 4px var(--shadow-light);
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
-
 #login-link:hover, #register-link:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  color: white; 
+    background: var(--primary-hover);
 }
 
-/* 2. Nút Phụ (Đăng bài, Quản trị) */
-#create-link, #admin-link {
+/* Nút Đăng xuất */
+#logout-btn.btn-danger {
   background: none;
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-#create-link:hover, #admin-link:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-/* 3. Nút Nguy hiểm (Đăng xuất) */
-#logout-btn {
-  background: none;
-  color: var(--danger-color);
   border-color: var(--danger-color);
-  font-size: 0.95rem; 
-  cursor: pointer;
+  color: var(--danger-color);
 }
 
-#logout-btn:hover {
+#logout-btn.btn-danger:hover {
   background: var(--danger-color);
   color: white;
 }
 
-.hidden {
-  display: none !important; 
-}
-
 /* =================================== */
-/* POSTS AND GENERAL LAYOUT (index.html) */
+/* CONTAINER & POSTS */
 /* =================================== */
 .container {
   max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-h1 {
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .post-card {
-  background-color: white;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--shadow-light);
+  border-left: 5px solid var(--primary-color);
 }
 
 .post-card h2 {
+  color: var(--primary-color);
   margin-top: 0;
-  color: #1f2937;
-  font-size: 1.5rem;
 }
 
-.post-card p {
-  line-height: 1.6;
+.post-content {
+    white-space: pre-wrap;
+    /* Xử lý nội dung post dài */
 }
 
 .post-meta {
   font-size: 0.85rem;
   color: var(--text-light);
-  margin-top: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed var(--border-color);
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .file-section {
-  margin-top: 1rem;
-  padding: 0.5rem 0;
+    margin: 15px 0;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
 }
-
 .post-image {
-  max-width: 100%;
-  height: auto;
-  margin-top: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
+  max-width: 100%; 
+  height: auto; 
+  display: block;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px var(--shadow-light);
 }
 
-.post-actions {
-  margin-top: 1rem;
-  text-align: right;
-}
-
-.post-delete-btn {
+.delete-post-btn {
   background: none;
   border: 1px solid var(--danger-color);
   color: var(--danger-color);
   font-size: 0.85rem;
   padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: none;
   transition: all 0.2s;
 }
 
-.post-delete-btn:hover {
+.delete-post-btn:hover {
   background: var(--danger-color);
   color: white;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+
+/* =================================== */
+/* FORM PAGES (login.html, register.html) */
+/* =================================== */
+
+.form-container {
+  background: white;
+  padding: 25px 35px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light);
+  width: 350px; /* Tăng nhẹ để chứa nội dung 2 bước */
+  margin: 80px auto 20px auto; 
+  text-align: center;
+}
+
+.form-container h1 {
+  color: var(--primary-color);
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.form-container input {
+  width: 100%;
+  margin: 10px 0; 
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 15px;
+}
+
+.form-container button {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  transition: background 0.2s;
+}
+
+.form-container button:hover {
+  background: var(--primary-hover);
+}
+
+.form-container .btn-secondary {
+    background: var(--secondary-color);
+}
+
+.form-container .btn-secondary:hover {
+    background: #5a6268;
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* =================================== */
-/* COMMENTS (index.html) */
+/* BÌNH LUẬN */
 /* =================================== */
 
 .comment-section {
@@ -202,8 +225,9 @@ h1 {
 }
 
 .comment-section h4 {
-  margin-bottom: 0.75rem;
-  color: #333;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-color);
 }
 
 .comment-list {
@@ -213,456 +237,155 @@ h1 {
   margin-bottom: 1rem;
   max-height: 300px; 
   overflow-y: auto; 
-  padding-right: 10px; 
+  padding-right: 10px;
 }
 
 .comment-item {
   background: #f9f9f9;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  padding: 0.75rem;
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--secondary-color);
   font-size: 0.9rem;
-  position: relative; 
+  line-height: 1.4;
+  word-wrap: break-word; 
 }
 
 .comment-item p {
-  margin-bottom: 0.25rem;
-  line-height: 1.4;
+    margin: 0 0 5px 0;
 }
 
-.comment-item span {
-  font-size: 0.8rem;
-  color: var(--text-light);
-  display: block;
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-light);
+    font-size: 0.8rem;
 }
 
-/* Nút xóa bình luận */
 .comment-delete-btn {
-  position: absolute;
-  top: 0.5rem; 
-  right: 0.5rem; 
-  background: none;
-  border: none;
-  color: var(--danger-color);
-  font-size: 0.75rem; 
-  padding: 0.3rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s, color 0.2s;
-}
-
-.comment-delete-btn:hover {
-  opacity: 1;
-  color: var(--danger-color);
-  background: none; 
-}
-
-
-.no-comments, .comment-login-prompt {
-  font-size: 0.9rem;
-  color: var(--text-light);
-  font-style: italic;
-}
-
-.comment-form {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0 5px;
 }
 
 .comment-form textarea {
-  flex-grow: 1;
-  min-height: 40px;
-  height: 40px; 
-  margin: 0;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  resize: vertical;
+    width: 100%;
+    height: 60px;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    resize: vertical;
 }
 
 .comment-form button {
-  height: 40px; 
-  flex-shrink: 0;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.comment-form button:hover {
-  background-color: var(--primary-hover);
+    width: auto;
+    float: right;
+    padding: 8px 15px;
+    margin-top: 5px;
 }
 
 /* =================================== */
-/* FORM PAGES (login.html, register.html) */
+/* CREATE POST PAGE (create.html) */
 /* =================================== */
 
-.form-container {
-  max-width: 400px;
-  margin: 5rem auto 2rem; 
-  padding: 2rem;
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px var(--shadow-light);
-  text-align: center;
+.create-post-container {
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-light);
 }
 
-.form-container h1 {
-  margin-top: 0;
-  font-size: 1.8rem;
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--primary-color);
-  display: inline-block; 
-  padding-bottom: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.form-container form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-container input[type="text"],
-.form-container input[type="password"] {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 1rem;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-
-.form-container input:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.form-container button[type="submit"] {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-}
-
-.form-container button[type="submit"]:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-#message {
-  margin-top: 1rem;
-  color: var(--danger-color);
-  font-weight: 500;
-}
-
-
-/* =================================== */
-/* RESPONSIVENESS (MOBILE DEVICES) */
-/* =================================== */
-
-@media (max-width: 768px) {
-  
-  /* Giảm padding chung và tăng độ rộng container */
-  .container {
-    margin: 1rem auto;
-    padding: 0 0.5rem; 
-  }
-
-  /* Điều chỉnh navbar cho màn hình nhỏ */
-  .navbar {
-    flex-direction: column; 
-    align-items: flex-start;
-    padding: 0.75rem 0.5rem;
-  }
-  
-  .nav-left {
-    margin-bottom: 0.5rem; 
-  }
-
-  .nav-right {
-    width: 100%;
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 0.5rem; 
-    margin-left: 0;
-  }
-
-  .nav-right a,
-  .nav-right button {
-    margin: 0; 
-    flex: 1 1 auto; 
-    text-align: center;
-    font-size: 0.9rem;
-    padding: 0.4rem 0.8rem;
-  }
-  
-  /* Đảm bảo nút đăng xuất vẫn nổi bật */
-  #logout-btn {
-    flex: 0 0 auto; 
-    width: 100%; 
-  }
-
-  /* Giảm kích thước chữ trong bài viết */
-  .post-card h2 {
-    font-size: 1.3rem;
-  }
-  
-  .post-card p {
-    font-size: 0.95rem;
-  }
-
-  /* Form bình luận: Stack (xếp chồng) textarea và button */
-  .comment-form {
-    flex-direction: column; 
-    gap: 0.75rem;
-  }
-  
-  .comment-form textarea {
-    min-height: 80px; 
-    height: auto;
-  }
-  
-  .comment-form button {
-    width: 100%; 
-    height: auto; 
-    padding: 0.6rem 1rem;
-  }
-  
-  /* Đảm bảo nút xóa bình luận vẫn ở góc */
-  .comment-item {
-    padding-right: 3rem; 
-  }
-  
-  /* FORM PAGES RESPONSIVENESS */
-  .form-container {
-    max-width: 100%;
-    margin: 2rem 0; 
-    padding: 1rem; 
-    box-shadow: none; 
-    border-radius: 0; 
-  }
-
-}
-
-/* =================================== */
-/* LANDING PAGE STYLES (index.html) */
-/* =================================== */
-
-.landing-body {
-    /* Thiết lập background toàn màn hình */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding-top: 0; 
-    background: linear-gradient(135deg, #007bff 0%, #1e40af 100%); /* Blue gradient */
-}
-
-.landing-container {
-    width: 90%;
-    max-width: 600px;
-    background-color: white;
-    padding: 3rem;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    text-align: center;
-}
-
-.landing-container h1 {
-    font-size: 2.5rem;
+.create-post-container h1 {
     color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    border-bottom: none; 
-    padding-bottom: 0;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-top: 0;
+    font-size: 24px;
 }
 
-.landing-container p {
-    font-size: 1.1rem;
-    color: var(--text-color);
-    margin-bottom: 2rem;
-}
-
-.btn-get-started {
-    display: inline-block;
-    background-color: var(--danger-color); /* Màu đỏ nổi bật */
-    color: white;
-    padding: 0.75rem 2rem;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.5);
-}
-
-.btn-get-started:hover {
-    background-color: #b91c1c; /* Đỏ đậm hơn */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(220, 38, 38, 0.7);
-}
-
-.landing-footer {
-    margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border-color);
-    font-size: 0.95rem;
-}
-
-.landing-footer p {
-    color: var(--text-light);
-    margin-bottom: 0.25rem;
-}
-
-.landing-footer a {
-    color: var(--primary-color); 
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.landing-footer a:hover {
-    text-decoration: underline;
-    color: var(--primary-hover);
-}
-
-/* Responsive adjustment for landing page */
-@media (max-width: 768px) {
-    .landing-container {
-        padding: 2rem 1.5rem;
-        margin: 1rem;
-    }
-    .landing-container h1 {
-        font-size: 2rem;
-    }
-    .btn-get-started {
-        padding: 0.6rem 1.5rem;
-        font-size: 1rem;
-        width: 100%;
-        box-sizing: border-box;
-    }
-}
-
-/* =================================== */
-/* REGISTER PAGE (register.html) */
-/* =================================== */
-
-.form-body {
-  font-family: "Segoe UI", sans-serif;
-  background: var(--bg-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-.form-container {
-  background: white;
-  padding: 25px 35px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px var(--shadow-light);
-  width: 320px;
-  text-align: center;
-}
-
-.form-container h1 {
-  color: var(--primary-color);
-  font-size: 22px;
-  margin-bottom: 15px;
-}
-
-.form-container input {
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  font-size: 15px;
-  box-sizing: border-box;
-}
-
-.form-container button {
-  width: 100%;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 5px;
-  transition: background 0.3s;
-}
-
-.form-container button:hover {
-  background: var(--primary-hover);
-}
-
-.form-container p {
-  margin-top: 10px;
-  color: var(--text-light);
-}
-
-#message {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--danger-color);
-}
-
-#otp-section {
-  margin-top: 8px;
-}
-/* =================================== */
-/* (MỚI) HỖ TRỢ ĐĂNG KÝ 2 BƯỚC + INPUT ICONS */
-/* =================================== */
-
-/* Ẩn/Hiện bước */
-.hidden {
-    display: none !important;
-}
-
-/* Container cho input có icon */
-.input-group {
-    position: relative;
+#create-post-form input[type="text"],
+#create-post-form textarea {
     width: 100%;
-    margin: 8px 0; /* Đồng bộ hóa với input thường */
-}
-
-.input-group input {
-    /* Đảm bảo input chiếm toàn bộ chiều rộng, trừ icon */
-    width: 100%;
-    padding: 10px;
-    padding-right: 40px; 
+    padding: 12px;
+    margin-bottom: 15px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    font-size: 15px;
-    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.2s;
 }
 
-/* Icon Show/Hide Password */
-.password-toggle {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
+#create-post-form input[type="text"]:focus,
+#create-post-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+#create-post-form textarea {
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.file-upload-area {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    background: #fcfcfc;
+}
+
+.file-upload-area label {
+    display: block;
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+#create-post-form button#submit-btn {
+    width: 100%;
+    background: var(--primary-color);
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
-    color: #888;
-    user-select: none; /* Ngăn chọn văn bản khi click */
-    font-size: 1.1rem;
-    transition: color 0.2s;
+    font-size: 18px;
+    font-weight: 600;
+    transition: background 0.2s;
 }
 
-.password-toggle:hover {
-    color: var(--primary-color);
+#create-post-form button#submit-btn:hover {
+    background: var(--primary-hover);
+}
+
+#create-post-form button#submit-btn:disabled {
+    background: var(--secondary-color);
+    cursor: not-allowed;
+}
+
+/* THÔNG BÁO */
+.info-message, .success-message, .error-message {
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.success-message {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
