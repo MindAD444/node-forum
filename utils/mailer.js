@@ -4,14 +4,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  // Sử dụng host, port, và bảo mật tường minh thay vì 'service: gmail'
+  // Sử dụng cấu hình STARTTLS qua Port 587
   host: 'smtp.gmail.com', 
-  port: 587, // Cổng bảo mật (SSL/TLS)
-  secure: false, // Bắt buộc phải là TRUE khi dùng port 465
+  port: 587, 
+  secure: false, // BẮT BUỘC là false khi dùng Port 587 (vì nó dùng STARTTLS)
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_PASS, 
   },
+  // Tăng thời gian chờ (Tùy chọn)
+  // Nếu máy chủ Render có độ trễ cao, việc tăng timeout có thể giúp.
+  // timeout: 20000, 
 });
 
 export const sendMail = async (email, code) => {
