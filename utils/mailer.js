@@ -3,23 +3,23 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Cấu hình SendGrid SMTP
 const transporter = nodemailer.createTransport({
-  // Sử dụng cấu hình STARTTLS qua Port 587
-  host: 'smtp.gmail.com', 
-  port: 587, 
-  secure: false, // BẮT BUỘC là false khi dùng Port 587 (vì nó dùng STARTTLS)
+  host: 'smtp.sendgrid.net', // Host SMTP của SendGrid
+  port: 587, // Port tiêu chuẩn cho STARTTLS
+  secure: false, // Bắt buộc là FALSE khi dùng Port 587 (STARTTLS)
   auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS, 
+    // Tên đăng nhập CỐ ĐỊNH cho SendGrid SMTP là 'apikey'
+    user: 'apikey', 
+    // Mật khẩu là API Key bạn đã tạo (từ biến môi trường)
+    pass: process.env.SG_API_KEY, 
   },
-  // Tăng thời gian chờ (Tùy chọn)
-  // Nếu máy chủ Render có độ trễ cao, việc tăng timeout có thể giúp.
-  // timeout: 20000, 
 });
 
 export const sendMail = async (email, code) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    // SENDER phải là email đã được xác minh trong SendGrid (từ biến môi trường)
+    from: process.env.EMAIL_SENDER, 
     to: email,
     subject: 'Mã xác thực đăng ký Forum',
     html: `
