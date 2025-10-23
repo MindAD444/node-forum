@@ -6,8 +6,8 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   // Sử dụng host, port, và bảo mật tường minh thay vì 'service: gmail'
   host: 'smtp.gmail.com', 
-  port: 465, // Cổng bảo mật (SSL/TLS)
-  secure: true, // Bắt buộc phải là TRUE khi dùng port 465
+  port: 587, // Cổng bảo mật (SSL/TLS)
+  secure: false, // Bắt buộc phải là TRUE khi dùng port 465
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_PASS, 
