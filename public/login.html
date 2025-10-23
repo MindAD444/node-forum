@@ -10,8 +10,7 @@
   <nav class="navbar">
     <div class="nav-right">
       <a href="index.html">Trang chủ</a>
-      <a href="register.html">Đăng ký</a>
-    </div>
+      </div>
   </nav>
 
   <main class="form-container">
@@ -25,10 +24,15 @@
       </div>
       
       <button type="submit">Đăng nhập</button>
+      <p class="note">
+  Chưa có tài khoản?
+      <a href="register.html">Đăng ký ngay</a>
+</p>
     </form>
     <p id="message"></p>
   </main>
-
+  <script src="theme.js"><script>
+  <script src="app.js"></script>
   <script>
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -55,7 +59,7 @@
               localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
               localStorage.setItem("userId", data.user.id); // LƯU USER ID
 
-              window.location.href = "index.html";
+              window.location.href = "home.html";
           } else {
               document.getElementById("message").textContent = data.error || "Đăng nhập thất bại.";
           }

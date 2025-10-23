@@ -8,8 +8,10 @@
 </head>
 <body>
   <nav class="navbar">
+    <div class="nav-left">
+      <a href="home.html" class="logo">💬 Forum</a>
+    </div>
     <div class="nav-right">
-      <a href="home.html">Trang chủ</a>
       <a href="login.html" id="login-link">Đăng nhập</a>
       <a href="register.html" id="register-link">Đăng ký</a>
     </div>
@@ -17,97 +19,107 @@
 
   <main class="container">
     <div class="create-post-container">
-        <h1>✍️ Đăng bài viết mới</h1>
-        <form id="create-post-form">
-            <input type="text" id="title" placeholder="Tiêu đề bài viết (Tối đa 100 ký tự)" required maxlength="100"/>
-            
-            <textarea id="content" placeholder="Nội dung bài viết của bạn..." rows="10" required></textarea>
-            
-            <div class="file-upload-area">
-                <label for="files">📎 Tệp đính kèm (Tối đa 5 file, < 5MB/file)</label>
-                <input type="file" id="files" name="files" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple />
-            </div>
-            
-            <button type="submit" id="submit-btn">Gửi bài</button>
-        </form>
-        <p id="message" class="info-message"></p>
+      <h1>✍️ Đăng bài viết mới</h1>
+      <form id="create-post-form" class="create-form">
+        <input type="text" id="title" placeholder="Tiêu đề bài viết (Tối đa 100 ký tự)" required maxlength="100"/>
+
+        <textarea id="content" placeholder="Nội dung bài viết của bạn..." rows="10" required></textarea>
+
+        <div class="file-upload-area">
+          <label for="files">📎 Tệp đính kèm (Tối đa 5 file, &lt; 5MB/file)</label>
+          <input type="file" id="files" name="files" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple />
+        </div>
+
+        <button type="submit" id="submit-btn">Gửi bài</button>
+      </form>
+      <p id="message" class="info-message"></p>
     </div>
   </main>
 
+  <script src="theme.js"></script>
+  <script src="app.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const token = localStorage.getItem("token");
-        // Chuyển hướng nếu chưa đăng nhập
-        if (!token) {
-            alert("Bạn cần đăng nhập để đăng bài.");
-            window.location.href = "login.html";
-            return;
-        }
-        
-        document.getElementById("login-link").classList.add("hidden");
-        document.getElementById("register-link").classList.add("hidden");
+      const token = localStorage.getItem("token");
 
-        document.getElementById("create-post-form").addEventListener("submit", createPost);
+      // Nếu chưa đăng nhập → chuyển hướng
+      if (!token) {
+        alert("Bạn cần đăng nhập để đăng bài.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Ẩn nút đăng nhập và đăng ký khi đã đăng nhập
+      document.getElementById("login-link").classList.add("hidden");
+      document.getElementById("register-link").classList.add("hidden");
+
+      // Thêm xử lý form
+      document.getElementById("create-post-form").addEventListener("submit", createPost);
+
+      // Áp dụng theme hiện tại
+      if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
+
+      // Gán sự kiện chuyển theme
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+      });
     });
 
+    // Xử lý gửi bài
     async function createPost(e) {
-        e.preventDefault();
-        const title = document.getElementById("title").value.trim();
-        const content = document.getElementById("content").value.trim();
-        const files = document.getElementById("files").files;
-        const messageEl = document.getElementById("message");
-        const submitBtn = document.getElementById("submit-btn");
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const content = document.getElementById("content").value.trim();
+      const files = document.getElementById("files").files;
+      const messageEl = document.getElementById("message");
+      const submitBtn = document.getElementById("submit-btn");
 
-        if (files.length > 5) {
-            messageEl.textContent = "Bạn chỉ có thể đính kèm tối đa 5 tệp.";
-            return;
+      if (files.length > 5) {
+        messageEl.textContent = "Bạn chỉ có thể đính kèm tối đa 5 tệp.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].size > 5 * 1024 * 1024) {
+          messageEl.textContent = `Tệp "${files[i].name}" quá lớn. Kích thước tối đa là 5MB.`;
+          return;
         }
+        formData.append("files", files[i]);
+      }
 
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("content", content);
-        
-        for (let i = 0; i < files.length; i++) {
-            // Kiểm tra kích thước file (Giả sử < 5MB)
-            if (files[i].size > 5 * 1024 * 1024) { 
-                 messageEl.textContent = `Tệp "${files[i].name}" quá lớn. Kích thước tối đa là 5MB.`;
-                 return;
-            }
-            formData.append("files", files[i]);
+      const token = localStorage.getItem("token");
+      messageEl.textContent = "Đang gửi bài viết...";
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch("/posts", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          messageEl.className = "success-message";
+          messageEl.innerHTML = `✅ ${data.message}. Vui lòng chờ admin duyệt. <a href='home.html'>Quay về trang chủ</a>`;
+          document.getElementById("create-post-form").reset();
+        } else {
+          messageEl.className = "error-message";
+          messageEl.textContent = data.error || "Lỗi khi đăng bài viết.";
         }
-        
-        const token = localStorage.getItem("token");
-        messageEl.textContent = "Đang gửi bài viết lên server...";
-        submitBtn.disabled = true;
-
-        try {
-            const res = await fetch("/posts", { 
-                method: "POST",
-                headers: { 
-                    // CHÚ Ý: Không set 'Content-Type' khi dùng FormData, trình duyệt sẽ tự set
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: formData
-            });
-
-            const data = await res.json();
-            
-            if (res.ok) {
-                messageEl.className = "success-message";
-                messageEl.innerHTML = `✅ ${data.message} Vui lòng chờ admin duyệt. <a href="index.html">Quay về trang chủ</a>.`;
-                document.getElementById("create-post-form").reset();
-            } else {
-                messageEl.className = "error-message";
-                messageEl.textContent = data.error || "Lỗi khi đăng bài viết.";
-            }
-        } catch (err) {
-            messageEl.className = "error-message";
-            messageEl.textContent = "Lỗi kết nối server.";
-        } finally {
-            submitBtn.disabled = false;
-        }
+      } catch (err) {
+        messageEl.className = "error-message";
+        messageEl.textContent = "Lỗi kết nối server.";
+      } finally {
+        submitBtn.disabled = false;
+      }
     }
   </script>
 </body>
 </html>
-

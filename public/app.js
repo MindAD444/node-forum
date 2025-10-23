@@ -1,52 +1,100 @@
-document.addEventListener("DOMContentLoaded", async () => {
+// ==============================
+// app.js - Quản lý giao diện và trạng thái người dùng
+// ==============================
+
+document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
-  const usernameDisplay = document.getElementById("username-display");
-  const createLink = document.getElementById("create-link");
-  const adminLink = document.getElementById("admin-link");
+  const username = localStorage.getItem("username");
+
   const loginLink = document.getElementById("login-link");
   const registerLink = document.getElementById("register-link");
+  const createLink = document.getElementById("create-link");
   const logoutBtn = document.getElementById("logout-btn");
+  const userNameDisplay = document.getElementById("user-name");
 
-  // Ẩn/hiện menu tùy theo đăng nhập
+  // Nếu người dùng đã đăng nhập
   if (token) {
-    try {
-      const res = await fetch("/auth/me", {
-        headers: { "Authorization": "Bearer " + token },
-      });
+    if (loginLink) loginLink.classList.add("hidden");
+    if (registerLink) registerLink.classList.add("hidden");
+    if (createLink) createLink.classList.remove("hidden");
+    if (logoutBtn) logoutBtn.classList.remove("hidden");
 
-      if (!res.ok) throw new Error("Token hết hạn");
-      const user = await res.json();
-
-      usernameDisplay.textContent = "👤 " + user.username;
-      loginLink.classList.add("hidden");
-      registerLink.classList.add("hidden");
-      logoutBtn.classList.remove("hidden");
-
-      // Nếu là user hoặc admin đều có thể đăng bài
-      if (user.role === "user" || user.role === "admin") {
-        createLink.classList.remove("hidden");
-      }
-
-      // Nếu là admin thì thêm link quản trị
-      if (user.role === "admin") {
-        adminLink.classList.remove("hidden");
-      }
-    } catch (err) {
-      console.error(err);
-      localStorage.removeItem("token");
+    if (userNameDisplay && username) {
+      userNameDisplay.textContent = `👤 ${username}`;
+      userNameDisplay.classList.remove("hidden");
     }
-  } else {
-    usernameDisplay.textContent = "";
-    createLink.classList.add("hidden");
-    adminLink.classList.add("hidden");
-    loginLink.classList.remove("hidden");
-    registerLink.classList.remove("hidden");
-    logoutBtn.classList.add("hidden");
+  } 
+  // Nếu chưa đăng nhập
+  else {
+    if (loginLink) loginLink.classList.remove("hidden");
+    if (registerLink) registerLink.classList.remove("hidden");
+    if (createLink) createLink.classList.add("hidden");
+    if (logoutBtn) logoutBtn.classList.add("hidden");
+    if (userNameDisplay) userNameDisplay.classList.add("hidden");
   }
 
-  // Nút đăng xuất
-  logoutBtn?.addEventListener("click", () => {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
+  // ==============================
+  // Nút Đăng xuất
+  // ==============================
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      alert("Bạn đã đăng xuất!");
+      window.location.href = "index.html";
+    });
+  }
+});
+
+// ==============================
+// HÀM FETCH CÓ TOKEN (nếu cần)
+// ==============================
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem("token");
+  options.headers = options.headers || {};
+  if (token) {
+    options.headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, options);
+  return res;
+}
+// === HAMBURGER MENU ===
+document.addEventListener("DOMContentLoaded", () => {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const hamburgerMenu = document.getElementById("hamburger-menu");
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener("click", () => {
+      hamburgerMenu.classList.toggle("hidden");
+    });
+  }
+
+  // Ẩn menu khi click ra ngoài
+  document.addEventListener("click", (e) => {
+    if (!hamburgerBtn.contains(e.target) && !hamburgerMenu.contains(e.target)) {
+      hamburgerMenu.classList.add("hidden");
+    }
   });
+});
+document.addEventListener("DOMContentLoaded", () => {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const hamburgerMenu = document.getElementById("hamburger-menu");
+  const themeToggleBtn = document.getElementById("menu-theme-toggle");
+
+  // Bật/tắt menu
+  hamburgerBtn.addEventListener("click", () => {
+    hamburgerMenu.classList.toggle("hidden");
+  });
+
+  // Bật/tắt dark mode
+  themeToggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+  });
+
+  // Giữ lại chế độ dark khi reload
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+  }
 });

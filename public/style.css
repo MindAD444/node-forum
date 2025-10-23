@@ -1,10 +1,8 @@
 /* =================================== */
-/* style.css (TỐI ƯU HÓA) */
+/* RESET + BIẾN TOÀN CỤC */
 /* =================================== */
-
-/* 1. Thiết lập lại Box Model (tối ưu hóa quan trọng) */
 *, *::before, *::after {
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 :root {
@@ -17,74 +15,185 @@
   --bg-color: #f4f4f4;
   --border-color: #e5e7eb;
   --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --card-bg: #ffffff;
+  --input-bg: #f9f9f9;
 }
 
-body {
-  font-family: sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  margin: 0;
-  padding-top: 60px; 
+/* DARK MODE */
+body.dark {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --primary-color: #4da3ff;
+  --primary-hover: #5dbbff;
+  --border-color: #333;
+  --shadow-light: rgba(255, 255, 255, 0.1);
+  --card-bg: #1a1a1a;
+  --input-bg: #1e1e1e;
 }
 
 /* =================================== */
-/* NAVBAR (CHUNG) */
+/* BODY */
+/* =================================== */
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding-top: 60px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* =================================== */
+/* NAVBAR */
 /* =================================== */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: white;
-  box-shadow: 0 2px 4px var(--shadow-light);
+  background: var(--card-bg);
+  box-shadow: 0 2px 6px var(--shadow-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 1.2rem;
   z-index: 1000;
+  flex-wrap: wrap;
 }
 
 .nav-left span {
-  font-weight: bold;
+  font-weight: 700;
   color: var(--primary-color);
+  font-size: 1.1rem;
 }
 
-.nav-right a, .nav-right button {
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.nav-right a,
+.nav-right button {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent; 
-  margin-left: 5px;
+  transition: 0.2s ease-in-out;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-color);
+  cursor: pointer;
 }
 
-/* Nút Đăng nhập/Đăng ký */
-#login-link, #register-link {
+.nav-right a:hover,
+.nav-right button:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: var(--primary-color);
+}
+
+/* Nút đăng nhập & đăng ký */
+#login-link,
+#register-link {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
-#login-link:hover, #register-link:hover {
-    background: var(--primary-hover);
+#login-link:hover,
+#register-link:hover {
+  background: var(--primary-hover);
 }
 
-/* Nút Đăng xuất */
-#logout-btn.btn-danger {
-  background: none;
-  border-color: var(--danger-color);
+/* Nút đăng xuất */
+#logout-btn {
+  border: 1px solid var(--danger-color);
   color: var(--danger-color);
 }
-
-#logout-btn.btn-danger:hover {
+#logout-btn:hover {
   background: var(--danger-color);
-  color: white;
+  color: #fff;
 }
 
 /* =================================== */
-/* CONTAINER & POSTS */
+/* DARK/LIGHT TOGGLE */
+/* =================================== */
+.theme-toggle {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: color 0.3s;
+}
+.theme-toggle:hover {
+  color: var(--primary-color);
+}
+
+/* =================================== */
+/* FORM (LOGIN / REGISTER / CREATE POST) */
+/* =================================== */
+.form-container, .create-post-container {
+  background: var(--card-bg);
+  color: var(--text-color);
+  padding: 25px 35px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light);
+  width: 90%;
+  max-width: 500px;
+  margin: 80px auto 20px;
+  text-align: center;
+  transition: background 0.3s, color 0.3s;
+}
+
+.form-container h1, .create-post-container h1 {
+  color: var(--primary-color);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+input, textarea {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+input:focus, textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+button {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
+}
+button:hover {
+  background: var(--primary-hover);
+  transform: scale(1.02);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =================================== */
+/* POSTS */
 /* =================================== */
 .container {
   max-width: 900px;
@@ -93,141 +202,71 @@ body {
 }
 
 .post-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
+  margin-top: 20px;
 }
 
 .post-card {
-  background: white;
+  background: var(--card-bg);
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px var(--shadow-light);
-  border-left: 5px solid var(--primary-color);
+  box-shadow: 0 3px 10px var(--shadow-light);
+  border-left: 4px solid var(--primary-color);
+  transition: transform 0.2s, box-shadow 0.3s;
 }
-
+.post-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 14px var(--shadow-light);
+}
 .post-card h2 {
   color: var(--primary-color);
+  font-size: 1.3rem;
   margin-top: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
 }
-
 .post-content {
-    white-space: pre-wrap;
-    /* Xử lý nội dung post dài */
+  white-space: pre-wrap;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
-
 .post-meta {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-light);
-  margin-top: 10px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.file-section {
-    margin: 15px 0;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-color);
-}
-.post-image {
-  max-width: 100%; 
-  height: auto; 
+/* =================================== */
+/* ẢNH TRONG BÀI VIẾT */
+/* =================================== */
+.post-card img,
+.post-content img,
+.comment-item img,
+.container img {
+  max-width: 100%;
+  height: auto;
   display: block;
-  margin: 10px 0;
+  margin: 10px auto;
   border-radius: 8px;
-  box-shadow: 0 1px 3px var(--shadow-light);
-}
-
-.delete-post-btn {
-  background: none;
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  font-size: 0.85rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.delete-post-btn:hover {
-  background: var(--danger-color);
-  color: white;
-}
-
-
-/* =================================== */
-/* FORM PAGES (login.html, register.html) */
-/* =================================== */
-
-.form-container {
-  background: white;
-  padding: 25px 35px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px var(--shadow-light);
-  width: 350px; /* Tăng nhẹ để chứa nội dung 2 bước */
-  margin: 80px auto 20px auto; 
-  text-align: center;
-}
-
-.form-container h1 {
-  color: var(--primary-color);
-  font-size: 22px;
-  margin-bottom: 20px;
-}
-
-/* Thêm CSS cho input-group để chứa nút toggle */
-.input-group {
-    position: relative; /* Quan trọng để định vị nút */
-    margin: 10px 0; /* Khoảng cách giữa các trường */
-    width: 100%;
-}
-
-.form-container input {
-  width: 100%;
-  /* Bỏ margin cũ vì đã chuyển sang input-group */
-  /* margin: 10px 0; */ 
-  padding: 12px;
-  border-radius: 6px;
+  box-shadow: 0 2px 6px var(--shadow-light);
   border: 1px solid var(--border-color);
-  font-size: 15px;
-  padding-right: 40px; /* Thêm khoảng trống cho nút toggle */
-}
-
-.form-container button {
-  width: 100%;
-  background: var(--primary-color);
-  color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 15px;
-  transition: background 0.2s;
-}
-
-.form-container button:hover {
-  background: var(--primary-hover);
-}
-
-.form-container .btn-secondary {
-    background: var(--secondary-color);
-}
-
-.form-container .btn-secondary:hover {
-    background: #5a6268;
-}
-
-.hidden {
-  display: none !important;
+  object-fit: contain;
 }
 
 /* Định vị và kiểu dáng cho nút Ẩn/Hiện Mật khẩu */
 .toggle-password {
     position: absolute;
     top: 50%; /* Căn giữa dọc */
-    right: 10px; /* Cách mép phải 10px */
+    right: 25px; /* Cách mép phải 10px */
     transform: translateY(-50%); /* Căn giữa dọc chính xác */
     cursor: pointer;
     user-select: none; 
@@ -240,180 +279,60 @@ body {
 .toggle-password:hover {
     color: var(--primary-color);
 }
-
-
 /* =================================== */
-/* BÌNH LUẬN */
+/* COMMENT SECTION */
 /* =================================== */
-
 .comment-section {
-  border-top: 1px solid var(--border-color);
-  margin-top: 1.5rem;
+  border-top: 1px dashed var(--border-color);
+  margin-top: 1rem;
   padding-top: 1rem;
-}
-
-.comment-section h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--text-color);
-}
-
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  max-height: 300px; 
-  overflow-y: auto; 
-  padding-right: 10px;
-}
-
-.comment-item {
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 6px;
-  border-left: 3px solid var(--secondary-color);
   font-size: 0.9rem;
-  line-height: 1.4;
-  word-wrap: break-word; 
+}
+.comment-item {
+  background: var(--input-bg);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+  margin-bottom: 10px;
 }
 
-.comment-item p {
-    margin: 0 0 5px 0;
-}
-
-.comment-meta {
-    display: flex;
-    justify-content: space-between;
+/* =================================== */
+/* RESPONSIVE */
+/* =================================== */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
     align-items: center;
-    color: var(--text-light);
-    font-size: 0.8rem;
-}
+    padding: 0.8rem;
+    gap: 0.5rem;
+  }
 
-.comment-delete-btn {
-    background: none;
-    border: none;
-    color: var(--danger-color);
-    font-size: 0.7rem;
-    cursor: pointer;
-    padding: 0 5px;
-}
+  .nav-right {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 
-.comment-form textarea {
-    width: 100%;
-    height: 60px;
-    padding: 10px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    resize: vertical;
-}
+  .nav-right a,
+  .nav-right button {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
 
-.comment-form button {
-    width: auto;
-    float: right;
-    padding: 8px 15px;
-    margin-top: 5px;
-}
-
-/* =================================== */
-/* CREATE POST PAGE (create.html) */
-/* =================================== */
-
-.create-post-container {
-    max-width: 700px;
-    margin: 20px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px var(--shadow-light);
-}
-
-.create-post-container h1 {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 15px;
-    margin-top: 0;
-    font-size: 24px;
-}
-
-#create-post-form input[type="text"],
-#create-post-form textarea {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    font-size: 16px;
-    transition: border-color 0.2s;
-}
-
-#create-post-form input[type="text"]:focus,
-#create-post-form textarea:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-#create-post-form textarea {
-    resize: vertical;
-    line-height: 1.5;
-}
-
-.file-upload-area {
-    margin-bottom: 20px;
+  .container {
     padding: 15px;
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
-    background: #fcfcfc;
-}
+  }
 
-.file-upload-area label {
-    display: block;
-    font-weight: bold;
-    color: var(--text-color);
-    margin-bottom: 8px;
-}
+  .post-card h2 {
+    font-size: 1.2rem;
+  }
 
-#create-post-form button#submit-btn {
+  button {
     width: 100%;
-    background: var(--primary-color);
-    color: white;
     padding: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
-    transition: background 0.2s;
+  }
 }
 
-#create-post-form button#submit-btn:hover {
-    background: var(--primary-hover);
+@media (min-width: 1024px) {
+  .container { max-width: 1100px; }
+  .post-card h2 { font-size: 1.5rem; }
 }
-
-#create-post-form button#submit-btn:disabled {
-    background: var(--secondary-color);
-    cursor: not-allowed;
-}
-
-/* THÔNG BÁO */
-.info-message, .success-message, .error-message {
-    padding: 10px;
-    margin-top: 15px;
-    border-radius: 6px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.success-message {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.error-message {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
