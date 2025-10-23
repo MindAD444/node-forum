@@ -261,24 +261,38 @@ button:hover {
   border: 1px solid var(--border-color);
   object-fit: contain;
 }
+/*======================= */
+/* PASSWORD TOGGLE STYLES */
+/* ====================== */
 
-/* Định vị và kiểu dáng cho nút Ẩn/Hiện Mật khẩu */
+.input-group {
+    position: relative; 
+    margin-bottom: 12px; /* Kế thừa margin của input chung */
+    /* Mobile và Desktop đều dùng chung style này */
+}
+
+.input-group input {
+    padding-right: 40px; 
+    margin-bottom: 0 !important; 
+}
+
 .toggle-password {
     position: absolute;
-    top: 50%; /* Căn giữa dọc */
-    right: 25px; /* Cách mép phải 10px */
-    transform: translateY(-50%); /* Căn giữa dọc chính xác */
+    top: 50%; 
+    right: 12px;
+    transform: translateY(-50%); 
     cursor: pointer;
     user-select: none; 
     font-size: 1.1em;
     color: var(--text-light);
     transition: color 0.2s;
-    z-index: 5; /* Đảm bảo nó nằm trên input */
+    z-index: 5; 
 }
 
 .toggle-password:hover {
     color: var(--primary-color);
 }
+
 /* =================================== */
 /* COMMENT SECTION */
 /* =================================== */
