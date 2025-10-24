@@ -1,100 +1,143 @@
-// ==============================
-// app.js - Quản lý giao diện và trạng thái người dùng
-// ==============================
+// ====================== TRẠNG THÁI NGƯỜI DÙNG ======================
+let currentUser = null;
 
+// ====================== KHỞI ĐỘNG ======================
 document.addEventListener("DOMContentLoaded", () => {
+  checkLoginStatus();
+  loadPosts();
+  document.getElementById("logout-btn").addEventListener("click", logout);
+});
+
+// ====================== KIỂM TRA ĐĂNG NHẬP ======================
+function checkLoginStatus() {
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const userId = localStorage.getItem("userId");
 
-  const loginLink = document.getElementById("login-link");
-  const registerLink = document.getElementById("register-link");
-  const createLink = document.getElementById("create-link");
-  const logoutBtn = document.getElementById("logout-btn");
-  const userNameDisplay = document.getElementById("user-name");
+  if (!token || !username) return;
 
-  // Nếu người dùng đã đăng nhập
-  if (token) {
-    if (loginLink) loginLink.classList.add("hidden");
-    if (registerLink) registerLink.classList.add("hidden");
-    if (createLink) createLink.classList.remove("hidden");
-    if (logoutBtn) logoutBtn.classList.remove("hidden");
+  currentUser = { _id: userId, username, isAdmin };
 
-    if (userNameDisplay && username) {
-      userNameDisplay.textContent = `👤 ${username}`;
-      userNameDisplay.classList.remove("hidden");
-    }
-  } 
-  // Nếu chưa đăng nhập
-  else {
-    if (loginLink) loginLink.classList.remove("hidden");
-    if (registerLink) registerLink.classList.remove("hidden");
-    if (createLink) createLink.classList.add("hidden");
-    if (logoutBtn) logoutBtn.classList.add("hidden");
-    if (userNameDisplay) userNameDisplay.classList.add("hidden");
-  }
+  document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
+  document.getElementById("login-link")?.classList.add("hidden");
+  document.getElementById("register-link")?.classList.add("hidden");
+  document.getElementById("logout-btn")?.classList.remove("hidden");
+  document.getElementById("create-link")?.classList.remove("hidden");
 
-  // ==============================
-  // Nút Đăng xuất
-  // ==============================
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      alert("Bạn đã đăng xuất!");
-      window.location.href = "index.html";
-    });
-  }
-});
-
-// ==============================
-// HÀM FETCH CÓ TOKEN (nếu cần)
-// ==============================
-async function fetchWithAuth(url, options = {}) {
-  const token = localStorage.getItem("token");
-  options.headers = options.headers || {};
-  if (token) {
-    options.headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(url, options);
-  return res;
+  if (isAdmin) document.getElementById("admin-link")?.classList.remove("hidden");
 }
-// === HAMBURGER MENU ===
-document.addEventListener("DOMContentLoaded", () => {
-  const hamburgerBtn = document.getElementById("hamburger-btn");
-  const hamburgerMenu = document.getElementById("hamburger-menu");
 
-  if (hamburgerBtn) {
-    hamburgerBtn.addEventListener("click", () => {
-      hamburgerMenu.classList.toggle("hidden");
-    });
-  }
+function logout() {
+  localStorage.clear();
+  window.location.reload();
+}
 
-  // Ẩn menu khi click ra ngoài
-  document.addEventListener("click", (e) => {
-    if (!hamburgerBtn.contains(e.target) && !hamburgerMenu.contains(e.target)) {
-      hamburgerMenu.classList.add("hidden");
+// ====================== TẢI DANH SÁCH BÀI VIẾT ======================
+async function loadPosts() {
+  try {
+    const res = await fetch("/posts");
+    const posts = await res.json();
+    const container = document.getElementById("posts");
+
+    if (!posts.length) {
+      container.innerHTML = "<p>Chưa có bài viết nào.</p>";
+      return;
     }
-  });
-});
-document.addEventListener("DOMContentLoaded", () => {
-  const hamburgerBtn = document.getElementById("hamburger-btn");
-  const hamburgerMenu = document.getElementById("hamburger-menu");
-  const themeToggleBtn = document.getElementById("menu-theme-toggle");
 
-  // Bật/tắt menu
-  hamburgerBtn.addEventListener("click", () => {
-    hamburgerMenu.classList.toggle("hidden");
-  });
+    container.innerHTML = posts.map(post => `
+      <div class="post-card">
+        <h2><a href="post.html?id=${post._id}">${post.title}</a></h2>
+        <p class="post-content">${post.content}</p>
 
-  // Bật/tắt dark mode
-  themeToggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
-  });
+        ${post.files?.length ? post.files.map(f => {
+          const ext = f.split('.').pop().toLowerCase();
+          return ["jpg","jpeg","png","gif","webp"].includes(ext)
+            ? `<img src="${f}" alt="Ảnh đính kèm"/>`
+            : `<a href="${f}" target="_blank">${f.split("/").pop()}</a>`;
+        }).join("<br>") : ""}
 
-  // Giữ lại chế độ dark khi reload
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark");
+        <div class="post-meta">
+          👤 <b>${post.author?.username || "Ẩn danh"}</b> • 🕓 ${new Date(post.createdAt).toLocaleString()}
+        </div>
+
+        <button class="toggle-comments-btn" data-post-id="${post._id}">💬 Bình luận</button>
+        <div id="comments-${post._id}" class="comments-box" style="display:none;"></div>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("Lỗi tải bài viết:", err);
   }
+}
+
+// ====================== CLICK HANDLER ======================
+document.addEventListener("click", (e) => {
+
+  // Mở bình luận
+  if (e.target.classList.contains("toggle-comments-btn")) {
+    toggleComments(e.target.dataset.postId);
+  }
+
+  // Gửi reply theo @username
+  if (e.target.classList.contains("reply-btn")) {
+    const username = e.target.dataset.username;
+    const box = e.target.closest(".comments-box");
+    const textarea = box.querySelector("textarea");
+    textarea.value = `@${username} `;
+    textarea.focus();
+  }
+
 });
+
+// ====================== HIỆN BÌNH LUẬN ======================
+async function toggleComments(postId) {
+  const box = document.getElementById(`comments-${postId}`);
+  box.style.display = box.style.display === "block" ? "none" : "block";
+  if (box.style.display === "block") loadComments(postId);
+}
+
+// ====================== LOAD COMMENT ======================
+async function loadComments(postId) {
+  const box = document.getElementById(`comments-${postId}`);
+  box.innerHTML = "<p>Đang tải bình luận...</p>";
+
+  const res = await fetch(`/comments/${postId}`);
+  const comments = await res.json();
+
+  box.innerHTML = `
+    <div class="comment-list">
+      ${comments.map(c => `
+        <div class="comment-item">
+          <b>${c.author?.username || "Ẩn danh"}</b>
+          <span> • ${new Date(c.createdAt).toLocaleString()}</span>
+          <p>${c.content}</p>
+
+          ${currentUser ? `<button class="reply-btn" data-username="${c.author.username}">↪ Trả lời</button>` : ""}
+        </div>
+      `).join("")}
+    </div>
+
+    ${currentUser ? `
+    <form class="comment-form" onsubmit="postComment('${postId}', this); return false;">
+      <textarea placeholder="Viết bình luận..." required></textarea>
+      <button type="submit">Đăng</button>
+    </form>` : `<p>Hãy đăng nhập để bình luận.</p>`}
+  `;
+}
+
+// ====================== GỬI COMMENT ======================
+async function postComment(postId, form) {
+  const token = localStorage.getItem("token");
+  const content = form.querySelector("textarea").value.trim();
+  if (!content) return;
+
+  await fetch(`/comments/${postId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ content })
+  });
+
+  form.reset();
+  loadComments(postId);
+}
