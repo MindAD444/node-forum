@@ -30,19 +30,13 @@ router.get("/:postId", async (req, res) => {
   }
 });
 
-// Gửi bình luận (không có parent nữa)
+// Gửi bình luận
 router.post("/:postId", auth("user"), async (req, res) => {
   try {
     const postId = req.params.postId;
     const { content } = req.body;
 
-    if (!isValidObjectId(postId)) {
-      return res.status(400).json({ error: "postId không hợp lệ" });
-    }
-
-    if (!content || content.trim() === "") {
-      return res.status(400).json({ error: "Nội dung không được để trống." });
-    }
+    if (!content || !content.trim()) return res.status(400).json({ error: "Nội dung không được để trống" });
 
     const newComment = await Comment.create({
       post: postId,
@@ -51,11 +45,31 @@ router.post("/:postId", auth("user"), async (req, res) => {
     });
 
     await newComment.populate("author", "username");
-
     res.status(201).json(newComment);
   } catch (err) {
     console.error("POST /comments error:", err);
     res.status(500).json({ error: "Lỗi server khi tạo bình luận" });
+  }
+});
+
+// ✅ Xoá bình luận — chỉ chủ comment hoặc Admin mới được phép
+router.delete("/:commentId", auth("user"), async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+
+    if (!comment) return res.status(404).json({ error: "Bình luận không tồn tại." });
+
+    const isOwner = comment.author.toString() === req.user._id.toString();
+
+    if (!req.user.isAdmin && !isOwner)
+      return res.status(403).json({ error: "Bạn không có quyền xoá bình luận này." });
+
+    await Comment.findByIdAndDelete(req.params.commentId);
+
+    res.json({ message: "Đã xoá bình luận thành công." });
+  } catch (err) {
+    console.error("DELETE /comments error:", err);
+    res.status(500).json({ error: "Lỗi server khi xoá bình luận" });
   }
 });
 

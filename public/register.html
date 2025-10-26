@@ -30,7 +30,8 @@
         <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required minlength="6"/>
         <span class="toggle-password" data-target="confirm-password">👁️</span>
       </div>
-      
+      <!-- Turnstile widget -->
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAB8xb4laQiOz0Ztp"></div>
       <button type="submit">Gửi mã xác thực</button>
     </form>
 
@@ -43,6 +44,7 @@
     
     <p id="message"></p>
   </main>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="theme.js"></script>
   <script src="app.js"></script>
   <script>

@@ -1,39 +1,47 @@
-// ====================== TRẠNG THÁI NGƯỜI DÙNG ======================
 let currentUser = null;
+let activePostId = null;
+let allComments = [];
+let commentOffset = 0;
+const firstLoad = 5;
+const stepLoad = 3;
 
-// ====================== KHỞI ĐỘNG ======================
+/* =============== CHECK LOGIN =============== */
 document.addEventListener("DOMContentLoaded", () => {
   checkLoginStatus();
   loadPosts();
+
   document.getElementById("logout-btn").addEventListener("click", logout);
+
+  document.getElementById("close-popup").onclick = () => {
+    document.getElementById("comment-popup").classList.add("hidden");
+  };
+
+  document.getElementById("load-more-comments").onclick = () => loadCommentChunk();
 });
 
-// ====================== KIỂM TRA ĐĂNG NHẬP ======================
 function checkLoginStatus() {
-  const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
+  const token = localStorage.getItem("token");
   const isAdmin = localStorage.getItem("isAdmin") === "true";
   const userId = localStorage.getItem("userId");
 
-  if (!token || !username) return;
+  if (token && username) {
+    currentUser = { username, userId, isAdmin };
 
-  currentUser = { _id: userId, username, isAdmin };
-
-  document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
-  document.getElementById("login-link")?.classList.add("hidden");
-  document.getElementById("register-link")?.classList.add("hidden");
-  document.getElementById("logout-btn")?.classList.remove("hidden");
-  document.getElementById("create-link")?.classList.remove("hidden");
-
-  if (isAdmin) document.getElementById("admin-link")?.classList.remove("hidden");
+    document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
+    document.getElementById("login-link").classList.add("hidden");
+    document.getElementById("register-link").classList.add("hidden");
+    document.getElementById("logout-btn").classList.remove("hidden");
+    document.getElementById("create-link").classList.remove("hidden");
+  }
 }
 
 function logout() {
   localStorage.clear();
-  window.location.reload();
+  location.reload();
 }
 
-// ====================== TẢI DANH SÁCH BÀI VIẾT ======================
+/* =============== LOAD POSTS =============== */
 async function loadPosts() {
   try {
     const res = await fetch("/posts");
@@ -47,97 +55,133 @@ async function loadPosts() {
 
     container.innerHTML = posts.map(post => `
       <div class="post-card">
-        <h2><a href="post.html?id=${post._id}">${post.title}</a></h2>
+        <h2>${post.title}</h2>
+
+        ${
+          currentUser && (currentUser.isAdmin || currentUser.userId === post.author?._id)
+            ? `<button class="delete-post-btn" data-post-id="${post._id}">🗑</button>`
+            : ""
+        }
+
         <p class="post-content">${post.content}</p>
 
-        ${post.files?.length ? post.files.map(f => {
-          const ext = f.split('.').pop().toLowerCase();
-          return ["jpg","jpeg","png","gif","webp"].includes(ext)
-            ? `<img src="${f}" alt="Ảnh đính kèm"/>`
-            : `<a href="${f}" target="_blank">${f.split("/").pop()}</a>`;
-        }).join("<br>") : ""}
+        ${post.files?.map(f => `<img src="${f}" alt="">`).join("") || ""}
 
         <div class="post-meta">
           👤 <b>${post.author?.username || "Ẩn danh"}</b> • 🕓 ${new Date(post.createdAt).toLocaleString()}
         </div>
 
         <button class="toggle-comments-btn" data-post-id="${post._id}">💬 Bình luận</button>
-        <div id="comments-${post._id}" class="comments-box" style="display:none;"></div>
       </div>
     `).join("");
 
+    /* GẮN SỰ KIỆN XOÁ SAU KHI RENDER */
+    document.querySelectorAll(".delete-post-btn").forEach(btn => {
+      btn.onclick = () => deletePost(btn.dataset.postId);
+    });
+
+    /* GẮN SỰ KIỆN MỞ COMMENT */
+    document.querySelectorAll(".toggle-comments-btn").forEach(btn => {
+      btn.onclick = () => openComments(btn.dataset.postId);
+    });
+
   } catch (err) {
-    console.error("Lỗi tải bài viết:", err);
+    console.error("Lỗi tải bài:", err);
   }
 }
 
-// ====================== CLICK HANDLER ======================
-document.addEventListener("click", (e) => {
-
-  // Mở bình luận
-  if (e.target.classList.contains("toggle-comments-btn")) {
-    toggleComments(e.target.dataset.postId);
-  }
-
-  // Gửi reply theo @username
-  if (e.target.classList.contains("reply-btn")) {
-    const username = e.target.dataset.username;
-    const box = e.target.closest(".comments-box");
-    const textarea = box.querySelector("textarea");
-    textarea.value = `@${username} `;
-    textarea.focus();
-  }
-
-});
-
-// ====================== HIỆN BÌNH LUẬN ======================
-async function toggleComments(postId) {
-  const box = document.getElementById(`comments-${postId}`);
-  box.style.display = box.style.display === "block" ? "none" : "block";
-  if (box.style.display === "block") loadComments(postId);
+/* =============== POPUP COMMENTS =============== */
+function openComments(postId) {
+  activePostId = postId;
+  commentOffset = 0;
+  document.getElementById("comment-list").innerHTML = "";
+  document.getElementById("comment-popup").classList.remove("hidden");
+  loadComments();
 }
 
-// ====================== LOAD COMMENT ======================
-async function loadComments(postId) {
-  const box = document.getElementById(`comments-${postId}`);
-  box.innerHTML = "<p>Đang tải bình luận...</p>";
+/* =============== LOAD COMMENTS =============== */
+async function loadComments() {
+  const res = await fetch(`/comments/${activePostId}`);
+  allComments = await res.json();
+  loadCommentChunk();
 
-  const res = await fetch(`/comments/${postId}`);
-  const comments = await res.json();
+  if (currentUser) {
+    document.getElementById("comment-form").classList.remove("hidden");
+    document.getElementById("login-hint").classList.add("hidden");
+  } else {
+    document.getElementById("comment-form").classList.add("hidden");
+    document.getElementById("login-hint").classList.remove("hidden");
+  }
+}
 
-  box.innerHTML = `
-    <div class="comment-list">
-      ${comments.map(c => `
-        <div class="comment-item">
-          <b>${c.author?.username || "Ẩn danh"}</b>
-          <span> • ${new Date(c.createdAt).toLocaleString()}</span>
-          <p>${c.content}</p>
+function loadCommentChunk() {
+  const list = document.getElementById("comment-list");
+  const slice = allComments.slice(0, commentOffset + (commentOffset === 0 ? firstLoad : stepLoad));
+  commentOffset = slice.length;
 
-          ${currentUser ? `<button class="reply-btn" data-username="${c.author.username}">↪ Trả lời</button>` : ""}
-        </div>
-      `).join("")}
+  list.innerHTML = slice.map(c => `
+    <div class="comment-item">
+      <b>${c.author?.username}</b> • ${new Date(c.createdAt).toLocaleString()}
+      <p>${c.content}</p>
+
+      ${
+        currentUser && (currentUser.userId === c.author?._id || currentUser.isAdmin)
+          ? `<button class="delete-comment-btn" data-id="${c._id}">🗑</button>`
+          : ""
+      }
     </div>
+  `).join("");
 
-    ${currentUser ? `
-    <form class="comment-form" onsubmit="postComment('${postId}', this); return false;">
-      <textarea placeholder="Viết bình luận..." required></textarea>
-      <button type="submit">Đăng</button>
-    </form>` : `<p>Hãy đăng nhập để bình luận.</p>`}
-  `;
-}
-
-// ====================== GỬI COMMENT ======================
-async function postComment(postId, form) {
-  const token = localStorage.getItem("token");
-  const content = form.querySelector("textarea").value.trim();
-  if (!content) return;
-
-  await fetch(`/comments/${postId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ content })
+  /* GẮN SỰ KIỆN XOÁ SAU KHI RENDER */
+  document.querySelectorAll(".delete-comment-btn").forEach(btn => {
+    btn.onclick = () => deleteComment(btn.dataset.id);
   });
 
-  form.reset();
-  loadComments(postId);
+  document.getElementById("load-more-comments").classList.toggle(
+    "hidden",
+    commentOffset >= allComments.length
+  );
+}
+
+/* =============== POST COMMENT =============== */
+document.getElementById("comment-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const content = document.getElementById("comment-input").value.trim();
+  if (!content) return;
+
+  await fetch(`/comments/${activePostId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    },
+    body: JSON.stringify({ content }),
+  });
+
+  document.getElementById("comment-input").value = "";
+  loadComments();
+};
+
+/* =============== DELETE COMMENT =============== */
+async function deleteComment(commentId) {
+  if (!confirm("Xoá bình luận này?")) return;
+
+  await fetch(`/comments/${commentId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+  });
+
+  loadComments();
+}
+
+/* =============== DELETE POST =============== */
+async function deletePost(postId) {
+  if (!confirm("Xoá bài viết?")) return;
+
+  await fetch(`/posts/${postId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+  });
+
+  loadPosts();
 }

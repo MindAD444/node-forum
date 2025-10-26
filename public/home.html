@@ -34,6 +34,22 @@
     <h1>📜 Danh sách bài viết</h1>
     <div id="posts" class="post-list">Đang tải...</div>
   </main>
+  <!-- POPUP HIỂN THỊ COMMENT -->
+<div id="comment-popup" class="popup hidden">
+  <div class="popup-content">
+    <button id="close-popup" class="close-btn">✖</button>
+    <h2>💬 Bình luận</h2>
+    <div id="comment-list"></div>
+    <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
+
+    <form id="comment-form" class="hidden">
+      <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
+      <button type="submit">Đăng</button>
+    </form>
+
+    <p id="login-hint" class="hidden">Bạn cần đăng nhập để bình luận.</p>
+  </div>
+</div>
   <!-- SCRIPT -->
   <script src="theme.js"></script>
   <script src="app.js"></script>
