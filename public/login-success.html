@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Đang đăng nhập...</title>
+</head>
+<body>
+  <p>Đang đăng nhập, vui lòng chờ...</p>
+
+  <script>
+    fetch("/auth/me")
+      .then(res => res.json())
+      .then(user => {
+
+        // ✅ Lưu thông tin người dùng vào localStorage
+        localStorage.setItem("token", "google-auth");
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("userId", user._id);
+        localStorage.setItem("isAdmin", user.isAdmin ? "true" : "false");
+
+        // ✅ Chuyển hướng về trang chủ
+        window.location.href = "/home.html";
+      })
+      .catch(() => window.location.href = "/login.html");
+  </script>
+</body>
+</html>

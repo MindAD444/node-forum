@@ -4,7 +4,19 @@ let allComments = [];
 let commentOffset = 0;
 const firstLoad = 5;
 const stepLoad = 3;
+document.getElementById("google-login").onclick = () => {
+  window.location.href = "/auth/google";
+};
 
+// Nhận token trả về từ callback Google
+const params = new URLSearchParams(window.location.search);
+if (params.get("token")) {
+  localStorage.setItem("token", params.get("token"));
+  localStorage.setItem("username", params.get("username"));
+  localStorage.setItem("userId", params.get("userId"));
+  localStorage.setItem("isAdmin", params.get("isAdmin") === "true");
+  window.location.href = "home.html";
+}
 /* =============== CHECK LOGIN =============== */
 document.addEventListener("DOMContentLoaded", () => {
   checkLoginStatus();

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js'; 
-
+import session from "express-session";
 // Middleware xác thực token và kiểm tra vai trò
 const auth = (requiredRole) => async (req, res, next) => {
   const authHeader = req.headers.authorization;

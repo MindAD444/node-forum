@@ -3,7 +3,13 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '../utils/mailer.js'; 
-
+import { google } from "googleapis";
+import passport from "passport";
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 const router = express.Router();
 const verificationCodes = {}; // Lưu mã xác thực tạm (in-memory)
 
@@ -64,6 +70,55 @@ router.post('/register/verify', async (req, res) => {
 });
 
 // 🔑 Đăng nhập
+// GOOGLE LOGIN
+// Redirect user to Google login page
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// Google callback
+router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login.html" }), async (req, res) => {
+
+  // Check if user already has an account
+  let user = await User.findOne({ email: req.user.email });
+
+  if (user) {
+    // Create login token
+    const token = jwt.sign({ userId: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET);
+    return res.redirect(`/login-success.html?token=${token}&username=${user.username}&userId=${user._id}&isAdmin=${user.isAdmin}`);
+  }
+
+  // If user doesn't exist → require username setup
+  let pending = await PendingUser.findOne({ email: req.user.email });
+  if (!pending) {
+    pending = new PendingUser({ googleId: req.user.googleId, email: req.user.email });
+    await pending.save();
+  }
+
+  return res.redirect(`/choose-username.html?email=${pending.email}`);
+});
+
+// Final step: choose username and create real account
+router.post("/set-username", async (req, res) => {
+  const { email, username } = req.body;
+  if (!email || !username) return res.status(400).json({ error: "Thiếu dữ liệu" });
+
+  const exists = await User.findOne({ username });
+  if (exists) return res.status(400).json({ error: "Tên đã tồn tại" });
+
+  const pending = await PendingUser.findOne({ email });
+  if (!pending) return res.status(404).json({ error: "Không tìm thấy dữ liệu tạm" });
+
+  const user = new User({
+    email,
+    username,
+    googleId: pending.googleId,
+    password: null, // login google không cần password
+  });
+  await user.save();
+  await PendingUser.deleteOne({ email });
+
+  const token = jwt.sign({ userId: user._id, isAdmin: false }, process.env.JWT_SECRET);
+  res.json({ token, username, userId: user._id });
+});
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     // Tìm kiếm bằng username hoặc email

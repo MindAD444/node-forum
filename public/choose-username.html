@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Chọn tên hiển thị</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="centered">
+
+<div class="form-container">
+  <h1>Chọn tên hiển thị</h1>
+  <p>Đây sẽ là tên xuất hiện trong bài viết và bình luận</p>
+
+  <input id="username" placeholder="Ví dụ: AnNguyen123" required />
+  <button onclick="submitUsername()">Xác nhận</button>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const email = urlParams.get("email");
+
+async function submitUsername() {
+  const username = document.getElementById("username").value.trim();
+  if (!username) return alert("Hãy nhập tên!");
+
+  const res = await fetch("/auth/set-username", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, username })
+  });
+
+  const result = await res.json();
+  if (result.error) return alert(result.error);
+
+  localStorage.setItem("token", result.token);
+  localStorage.setItem("username", result.username);
+  localStorage.setItem("userId", result.userId);
+  window.location.href = "/home.html";
+}
+</script>
+
+</body>
+</html>
