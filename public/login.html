@@ -5,90 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đăng nhập - Forum</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="theme.js" defer></script>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-right">
-      <a href="index.html">Trang chủ</a>
-      </div>
-  </nav>
 
-  <main class="form-container">
-    <h1>Đăng nhập</h1>
-    <form id="login-form">
-      <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/> 
-      
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
-        <span class="toggle-password" data-target="password">👁️</span>
-      </div>
-      
-      <button type="submit">Đăng nhập</button>
-      <button type="button" id="google-login" style="margin-top:10px; background:#db4437; color:white;">
-  Đăng nhập bằng Google
-</button>
-      <p class="note">
-  Chưa có tài khoản?
-      <a href="register.html">Đăng ký ngay</a>
-</p>
-    </form>
-    <p id="message"></p>
-  </main>
-  <script src="theme.js"><script>
-  <script src="app.js"></script>
-  <script>
-    document.getElementById("google-login").onclick = () => {
-      window.location.href = "/auth/google";
-};
-    if (localStorage.getItem('token')) {
-        window.location.href = "home.html";
-    }
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      
-      document.getElementById("message").textContent = "Đang đăng nhập...";
+<nav class="navbar">
+  <div class="nav-right">
+    <a href="index.html">Trang chủ</a>
+  </div>
+</nav>
 
-      try {
-          const res = await fetch("/auth/login", { 
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password })
-          });
-          const data = await res.json();
-          
-          if (res.ok) {
-              // Phân tích token để lấy thông tin user (đã được tối ưu ở Backend)
-              const tokenParts = JSON.parse(atob(data.token.split('.')[1]));
-              
-              localStorage.setItem("token", data.token);
-              localStorage.setItem("username", data.user.username);
-              localStorage.setItem("role", tokenParts.role || "user");
-              localStorage.setItem("isAdmin", tokenParts.isAdmin || false);
-              localStorage.setItem("userId", data.user.id); // LƯU USER ID
+<main class="form-container">
+  <h1>Đăng nhập</h1>
 
-              window.location.href = "home.html";
-          } else {
-              document.getElementById("message").textContent = data.error || "Đăng nhập thất bại.";
-          }
-      } catch (err) {
-          document.getElementById("message").textContent = "Lỗi kết nối server.";
-      }
-    });
+  <form id="login-form">
+    <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/>
 
-    // Logic Ẩn/Hiện Mật khẩu
-    document.querySelector('.toggle-password').addEventListener('click', function() {
-        const targetId = this.getAttribute('data-target');
-        const passwordInput = document.getElementById(targetId);
-        
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        
-        // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
-        this.textContent = type === 'text' ? '🔒' : '👁️';
-    });
-  </script>
+    <div class="input-group">
+      <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
+      <span class="toggle-password" data-target="password">👁️</span>
+    </div>
+
+    <button type="submit">Đăng nhập</button>
+    <div id="google-login" style="margin-top:12px; display:flex; justify-content:center; background: var(--primary-color); color: #fff; border: none; padding: 3px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.2s;"></div>
+  </form>
+  <p class="note">Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a></p>
+
+  <p id="message"></p>
+</main>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="app.js"></script>
+
+<script>
+// ===== GOOGLE LOGIN =====
+google.accounts.id.initialize({
+  client_id: "572721154448-he27ni18e01c1pkr8g9ad28u5gook42j.apps.googleusercontent.com",
+  callback: handleGoogleLogin,
+});
+
+google.accounts.id.renderButton(
+  document.getElementById("google-login"),
+  { theme: "filled_blue", size: "large", width: "100%" }
+);
+
+async function handleGoogleLogin(response) {
+  const res = await fetch("/auth/google-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: response.credential })
+  });
+
+  const data = await res.json();
+
+  if (data.newUser) {
+    localStorage.setItem("pendingUser", JSON.stringify(data));
+    return location.href = "choose-username.html";
+  }
+
+  location.href = "home.html";
+}
+
+// ===== LOGIN FORM =====
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  const res = await fetch("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) return location.href = "home.html";
+  document.getElementById("message").textContent = data.error;
+});
+
+// ===== Show/Hide Password =====
+document.querySelector('.toggle-password').addEventListener('click', function() {
+  const inp = document.getElementById(this.dataset.target);
+  inp.type = inp.type === "password" ? "text" : "password";
+  this.textContent = inp.type === "password" ? "👁️" : "🔒";
+});
+</script>
+
 </body>
 </html>
-

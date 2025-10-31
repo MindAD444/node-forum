@@ -5,8 +5,6 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary";
-import session from "express-session";
-import passport from "passport";
 import authRoutes from "./routes/auth.js";
 import postRoutes from "./routes/posts.js";
 import adminRoutes from "./routes/admin.js";
@@ -14,24 +12,10 @@ import commentRoutes from "./routes/comments.js";
 
 dotenv.config();
 const app = express();
-import configureGoogleAuth from "./config/google.js";
 // Middleware chung
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// SESSION (phải đặt trước passport)
-app.use(session({
-  secret: process.env.SESSION_SECRET || "super-secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // quan trọng cho local test
-}));
-
-// Cấu hình Passport
-configureGoogleAuth();
-app.use(passport.initialize());
-app.use(passport.session());
 
 // __dirname cho ESM
 const __filename = fileURLToPath(import.meta.url);

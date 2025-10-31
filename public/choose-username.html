@@ -1,42 +1,49 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Chọn tên hiển thị</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chọn tên người dùng</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="theme.js" defer></script>
 </head>
-<body class="centered">
+<body>
 
-<div class="form-container">
-  <h1>Chọn tên hiển thị</h1>
-  <p>Đây sẽ là tên xuất hiện trong bài viết và bình luận</p>
+<main class="form-container">
+  <h1>Chọn tên người dùng</h1>
 
-  <input id="username" placeholder="Ví dụ: AnNguyen123" required />
-  <button onclick="submitUsername()">Xác nhận</button>
-</div>
+  <p>Vui lòng chọn một tên để hoàn tất đăng nhập:</p>
+
+  <input type="text" id="username" placeholder="Nhập tên bạn muốn" required autocomplete="off" />
+  <button id="confirm-btn">Xác nhận</button>
+
+  <p id="message"></p>
+</main>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const email = urlParams.get("email");
+const pending = JSON.parse(localStorage.getItem("pendingUser"));
+if (!pending) location.href = "login.html";
 
-async function submitUsername() {
+document.getElementById("confirm-btn").onclick = async () => {
   const username = document.getElementById("username").value.trim();
-  if (!username) return alert("Hãy nhập tên!");
+
+  if (!username) return document.getElementById("message").textContent = "Tên không được bỏ trống.";
 
   const res = await fetch("/auth/set-username", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, username })
+    body: JSON.stringify({ email: pending.email, googleId: pending.googleId, username })
   });
 
-  const result = await res.json();
-  if (result.error) return alert(result.error);
+  const data = await res.json();
 
-  localStorage.setItem("token", result.token);
-  localStorage.setItem("username", result.username);
-  localStorage.setItem("userId", result.userId);
-  window.location.href = "/home.html";
-}
+  if (res.ok) {
+    localStorage.removeItem("pendingUser");
+    location.href = "home.html";
+  } else {
+    document.getElementById("message").textContent = data.error;
+  }
+};
 </script>
 
 </body>
