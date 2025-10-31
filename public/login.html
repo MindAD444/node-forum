@@ -37,6 +37,9 @@
   <script src="theme.js"><script>
   <script src="app.js"></script>
   <script>
+    document.getElementById("google-login").onclick = () => {
+      window.location.href = "/auth/google";
+};
     if (localStorage.getItem('token')) {
         window.location.href = "home.html";
     }
