@@ -1,48 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chọn tên người dùng</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="theme.js" defer></script>
+  <meta charset="UTF-8">
+  <title>Chọn Username</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <main class="form-container">
-  <h1>Chọn tên người dùng</h1>
-
-  <p>Vui lòng chọn một tên để hoàn tất đăng nhập:</p>
-
-  <input type="text" id="username" placeholder="Nhập tên bạn muốn" required autocomplete="off" />
-  <button id="confirm-btn">Xác nhận</button>
-
+  <h1>Chọn tên hiển thị</h1>
+  <input id="username" type="text" placeholder="Tên hiển thị..." />
+  <button id="save">Hoàn tất</button>
   <p id="message"></p>
 </main>
 
 <script>
-const pending = JSON.parse(localStorage.getItem("pendingUser"));
-if (!pending) location.href = "login.html";
-
-document.getElementById("confirm-btn").onclick = async () => {
+document.getElementById("save").onclick = async () => {
   const username = document.getElementById("username").value.trim();
-
-  if (!username) return document.getElementById("message").textContent = "Tên không được bỏ trống.";
+  const email = localStorage.getItem("google_email");
+  const googleId = localStorage.getItem("google_id");
 
   const res = await fetch("/auth/set-username", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: pending.email, googleId: pending.googleId, username })
+    body: JSON.stringify({ username, email, googleId })
   });
 
   const data = await res.json();
 
   if (res.ok) {
-    localStorage.removeItem("pendingUser");
-    location.href = "home.html";
-  } else {
-    document.getElementById("message").textContent = data.error;
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", username);
+    return window.location.href = "/home.html";
   }
+  document.getElementById("message").textContent = data.error;
 };
 </script>
 

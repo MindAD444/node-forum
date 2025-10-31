@@ -83,27 +83,36 @@ router.post("/google-login", async (req, res) => {
     const email = data.email;
     const googleId = data.sub;
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ googleId });
 
     if (!user) {
-      // User mới → chuyển đến trang đặt username
-      return res.json({ newUser: true, email, googleId });
+      // User đăng nhập google LẦN ĐẦU → yêu cầu chọn username
+      return res.json({
+        newUser: true,
+        googleId,
+        email
+      });
     }
 
+    // Login user đã tồn tại
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
-
-    res.json({ success: true });
+    return res.json({
+      token,
+      user: { id: user._id, username: user.username }
+    });
 
   } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: "Google Login Failed" });
+    console.error("Google Login Failed:", err);
+    return res.status(400).json({ error: "Google Login Failed" });
   }
 });
 
-// ======================= SET USERNAME (NEW GOOGLE USER) =======================
+// ======================= SET USERNAME FOR NEW GOOGLE USER =======================
 router.post("/set-username", async (req, res) => {
   const { email, googleId, username } = req.body;
+
+  if (!username || username.length < 3)
+    return res.status(400).json({ error: "Tên phải có ít nhất 3 ký tự." });
 
   const exists = await User.findOne({ username });
   if (exists) return res.status(400).json({ error: "Tên đã tồn tại." });
@@ -111,9 +120,9 @@ router.post("/set-username", async (req, res) => {
   const user = await User.create({ email, googleId, username });
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-  res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
-
-  res.json({ success: true });
-});
-
+  res.json({
+    token,
+    user: { id: user._id, username: user.username }
+  });
+}); 
 export default router;

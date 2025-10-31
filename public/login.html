@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đăng nhập - Forum</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="theme.js" defer></script>
 </head>
 <body>
@@ -19,37 +20,35 @@
   <h1>Đăng nhập</h1>
 
   <form id="login-form">
-    <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/>
+    <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required />
 
-    <div class="input-group">
-      <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
-      <span class="toggle-password" data-target="password">👁️</span>
-    </div>
+    <input type="password" id="password" placeholder="Mật khẩu" required />
 
     <button type="submit">Đăng nhập</button>
-    <div id="google-login" style="margin-top:12px; display:flex; justify-content:center; background: var(--primary-color); color: #fff; border: none; padding: 3px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.2s;"></div>
   </form>
-  <p class="note">Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a></p>
 
+  <br>
+
+  <!-- Google Sign-in -->
+  <div id="g_id_onload"
+       data-client_id="572721154448-vc3e2ehq2o5ci7liulj54bepri454c58.apps.googleusercontent.com"
+       data-context="signin"
+       data-callback="googleLogin"
+       data-auto_prompt="false">
+  </div>
+
+  <div class="g_id_signin"
+       data-type="standard"
+       data-size="large"
+       data-theme="outline">
+  </div>
+
+  <p>Chưa có tài khoản? <a href="register.html">Đăng ký</a></p>
   <p id="message"></p>
 </main>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js"></script>
-
 <script>
-// ===== GOOGLE LOGIN =====
-google.accounts.id.initialize({
-  client_id: "572721154448-he27ni18e01c1pkr8g9ad28u5gook42j.apps.googleusercontent.com",
-  callback: handleGoogleLogin,
-});
-
-google.accounts.id.renderButton(
-  document.getElementById("google-login"),
-  { theme: "filled_blue", size: "large", width: "100%" }
-);
-
-async function handleGoogleLogin(response) {
+async function googleLogin(response) {
   const res = await fetch("/auth/google-login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,37 +58,37 @@ async function handleGoogleLogin(response) {
   const data = await res.json();
 
   if (data.newUser) {
-    localStorage.setItem("pendingUser", JSON.stringify(data));
-    return location.href = "choose-username.html";
+    localStorage.setItem("google_email", data.email);
+    localStorage.setItem("google_id", data.googleId);
+    return window.location.href = "/choose-username.html";
   }
 
-  location.href = "home.html";
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("username", data.user.username);
+  window.location.href = "/home.html";
 }
 
-// ===== LOGIN FORM =====
-document.getElementById("login-form").addEventListener("submit", async (e) => {
+// Login truyền thống
+document.getElementById("login-form").onsubmit = async (e) => {
   e.preventDefault();
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
 
   const res = await fetch("/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
   });
-
   const data = await res.json();
 
-  if (res.ok) return location.href = "home.html";
-  document.getElementById("message").textContent = data.error;
-});
-
-// ===== Show/Hide Password =====
-document.querySelector('.toggle-password').addEventListener('click', function() {
-  const inp = document.getElementById(this.dataset.target);
-  inp.type = inp.type === "password" ? "text" : "password";
-  this.textContent = inp.type === "password" ? "👁️" : "🔒";
-});
+  if (res.ok) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.user.username);
+    window.location.href = "/home.html";
+  } else {
+    document.getElementById("message").textContent = data.error;
+  }
+};
 </script>
 
 </body>
