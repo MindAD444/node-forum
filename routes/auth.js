@@ -68,56 +68,71 @@ router.post('/register/verify', async (req, res) => {
     res.status(500).json({ error: 'Lỗi server khi tạo tài khoản.' });
   }
 });
-
-// 🔑 Đăng nhập
-// GOOGLE LOGIN
-// Redirect user to Google login page
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-
-// Google callback
-router.get("/google/callback", passport.authenticate("google", { failureRedirect: "/login.html" }), async (req, res) => {
-
-  // Check if user already has an account
-  let user = await User.findOne({ email: req.user.email });
-
-  if (user) {
-    // Create login token
-    const token = jwt.sign({ userId: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET);
-    return res.redirect(`/login-success.html?token=${token}&username=${user.username}&userId=${user._id}&isAdmin=${user.isAdmin}`);
+// Serialize & Deserialize User (không có sẽ lỗi 500)
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id).lean();
+    done(null, user);
+  } catch (err) {
+    done(err, null);
   }
-
-  // If user doesn't exist → require username setup
-  let pending = await PendingUser.findOne({ email: req.user.email });
-  if (!pending) {
-    pending = new PendingUser({ googleId: req.user.googleId, email: req.user.email });
-    await pending.save();
-  }
-
-  return res.redirect(`/choose-username.html?email=${pending.email}`);
 });
 
-// Final step: choose username and create real account
+// =============================
+// Đăng nhập Google
+// =============================
+router.get("/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// =============================
+// Callback Google (Google trả về đây)
+// =============================
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login.html" }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+
+      // Nếu user chưa chọn username → chuyển qua trang chọn tên
+      if (!user.username || user.username.startsWith("google-user-")) {
+        return res.redirect("/choose-username.html");
+      }
+
+      // Nếu user đã có username → chuyển đến Home
+      res.redirect("/home.html");
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      res.redirect("/login.html");
+    }
+  }
+);
+
+// =============================
+// API lưu username sau login google
+// =============================
 router.post("/set-username", async (req, res) => {
-  const { email, username } = req.body;
-  if (!email || !username) return res.status(400).json({ error: "Thiếu dữ liệu" });
+  try {
+    const { username } = req.body;
 
-  const exists = await User.findOne({ username });
-  if (exists) return res.status(400).json({ error: "Tên đã tồn tại" });
+    if (!req.user) return res.status(401).json({ error: "Bạn chưa đăng nhập!" });
+    if (!username || username.length < 3)
+      return res.status(400).json({ error: "Tên phải dài ít nhất 3 ký tự." });
 
-  const pending = await PendingUser.findOne({ email });
-  if (!pending) return res.status(404).json({ error: "Không tìm thấy dữ liệu tạm" });
+    const exists = await User.findOne({ username });
+    if (exists) return res.status(400).json({ error: "Tên đã tồn tại." });
 
-  const user = new User({
-    email,
-    username,
-    googleId: pending.googleId,
-    password: null, // login google không cần password
-  });
-  await user.save();
-  await PendingUser.deleteOne({ email });
+    await User.findByIdAndUpdate(req.user._id, { username });
 
-  const token = jwt.sign({ userId: user._id, isAdmin: false }, process.env.JWT_SECRET);
-  res.json({ token, username, userId: user._id });
+    res.json({ message: "Đổi tên thành công!" });
+  } catch (err) {
+    console.error("set-username error:", err);
+    res.status(500).json({ error: "Lỗi server!" });
+  }
 });
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
