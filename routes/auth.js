@@ -73,16 +73,16 @@ router.post("/google-login", async (req, res) => {
 
     let user = await User.findOne({ email });
 
-    // ⭕ chưa có → chuyển sang trang chọn username
     if (!user) {
+      // User chưa có → yêu cầu chọn tên
       return res.json({
-        newUser: true,
+        status: "NEW_USER",
         email,
         googleId
       });
     }
 
-    // ✅ user tồn tại → login
+    // User đã tồn tại → login bình thường
     const token = jwt.sign(
       { id: user._id, username: user.username, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
@@ -90,41 +90,15 @@ router.post("/google-login", async (req, res) => {
     );
 
     return res.json({
-      success: true,
+      status: "OK",
       token,
       user: { id: user._id, username: user.username, isAdmin: user.isAdmin }
     });
 
   } catch (err) {
     console.error("Google Login Error:", err);
-    res.status(400).json({ error: "Đăng nhập Google thất bại." });
+    return res.status(400).json({ error: "Đăng nhập Google thất bại." });
   }
 });
-
-// ---------------- GOOGLE SET USERNAME (FIRST TIME LOGIN) ----------------
-router.post("/set-username", async (req, res) => {
-  const { email, googleId, username } = req.body;
-
-  if (!email || !googleId || !username)
-    return res.status(400).json({ error: "Thiếu dữ liệu." });
-
-  const exists = await User.findOne({ username });
-  if (exists) return res.status(400).json({ error: "Tên đã tồn tại, hãy chọn tên khác." });
-
-  const user = await User.create({ email, googleId, username });
-
-  const token = jwt.sign(
-    { id: user._id, username: user.username, isAdmin: false },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  return res.json({
-    success: true,
-    token,
-    user: { id: user._id, username: user.username, isAdmin: false }
-  });
-});
-
 
 export default router;

@@ -2,11 +2,19 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập - Forum</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body>
-
+  <nav class="navbar">
+    <div class="nav-right">
+      <a href="index.html">Trang chủ</a>
+      <a href="register.html">Đăng Ký</a>
+    </div>
+  </nav>
 <main class="form-container">
   <h1>Đăng nhập</h1>
 
@@ -23,26 +31,33 @@
 
   <p id="message"></p>
 </main>
-
 <script>
 async function googleLogin(response) {
   const res = await fetch("/auth/google-login", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id_token: response.credential })
   });
 
   const data = await res.json();
 
-  if (data.newUser) {
-    localStorage.setItem("google_email", data.email);
-    localStorage.setItem("google_id", data.googleId);
-    return location.href = "choose-username.html";
+  if (data.status === "NEW_USER") {
+    // Lưu tạm thông tin google user chờ chọn username
+    localStorage.setItem("pending_google_email", data.email);
+    localStorage.setItem("pending_google_id", data.googleId);
+    return window.location.href = "choose-username.html";
   }
 
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("username", data.username);
-  location.href = "home.html";
+  if (data.status === "OK") {
+    // Đăng nhập hoàn tất
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.user.username);
+    localStorage.setItem("userId", data.user.id);
+    localStorage.setItem("isAdmin", data.user.isAdmin);
+    return window.location.href = "home.html";
+  }
+
+  alert("Đăng nhập Google thất bại.");
 }
 </script>
 
