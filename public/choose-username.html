@@ -1,41 +1,41 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Chọn tên người dùng</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="form-container">
-    <h1>Chọn tên người dùng</h1>
-    <input id="username" placeholder="Tên bạn muốn hiển thị" />
-    <button id="save-btn">Lưu</button>
-    <p id="msg"></p>
-  </main>
+
+<main class="form-container">
+  <h2>Chọn tên hiển thị</h2>
+  <input id="username" placeholder="Nhập tên..." />
+  <button id="save">Tiếp tục</button>
+  <p id="message"></p>
+</main>
 
 <script>
-  document.getElementById("save-btn").onclick = async () => {
-    const username = document.getElementById("username").value.trim();
-    const email = localStorage.getItem("pending_email");
-    const googleId = localStorage.getItem("pending_googleId");
+document.getElementById("save").onclick = async () => {
+  const username = document.getElementById("username").value.trim();
+  const email = localStorage.getItem("google_email");
+  const googleId = localStorage.getItem("google_id");
 
-    const res = await fetch("/auth/set-username", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, googleId, username })
-    });
+  const res = await fetch("/auth/set-username", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, googleId, username })
+  });
 
-    const data = await res.json();
-    if (data.success) {
-      // Xoá dữ liệu tạm
-      localStorage.removeItem("pending_email");
-      localStorage.removeItem("pending_googleId");
+  const data = await res.json();
 
-      window.location.href = "/home.html";
-    } else {
-      document.getElementById("msg").textContent = data.error;
-    }
-  };
+  if (res.ok) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username);
+    location.href = "home.html";
+  } else {
+    document.getElementById("message").textContent = data.error;
+  }
+};
 </script>
+
 </body>
 </html>

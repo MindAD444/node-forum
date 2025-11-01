@@ -2,185 +2,48 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đăng nhập - Forum</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="theme.js" defer></script>
-
-  <style>
-    /* Popup chọn username */
-    #username-popup {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-    }
-    #username-popup .popup-box {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 420px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-      text-align: center;
-    }
-    #username-popup input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
-      background: var(--input-bg);
-      color: var(--text-color);
-    }
-    #username-popup button {
-      margin-top: 12px;
-      width: 100%;
-      padding: 12px;
-      border-radius: 6px;
-      background: var(--primary-color);
-      color: white;
-      cursor: pointer;
-      border: none;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
-
-<nav class="navbar">
-  <div class="nav-right">
-    <a href="index.html">Trang chủ</a>
-  </div>
-</nav>
 
 <main class="form-container">
   <h1>Đăng nhập</h1>
 
   <form id="login-form">
-    <input type="text" id="username" placeholder="Tên đăng nhập hoặc Email" required autocomplete="username"/>
-    <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="current-password"/>
-    <button type="submit">Đăng nhập</button>
+    <input id="username" placeholder="Tên hoặc Email" required>
+    <input id="password" type="password" placeholder="Mật khẩu" required>
+    <button>Đăng nhập</button>
   </form>
 
-  <br>
-
-  <!-- GOOGLE LOGIN BUTTON -->
   <div id="g_id_onload"
-       data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE"
-       data-callback="handleGoogleLogin"
-       data-auto_prompt="false">
-  </div>
+       data-client_id="572721154448-vc3e2ehq2o5ci7liulj54bepri454c58.apps.googleusercontent.com"
+       data-callback="googleLogin"></div>
+  <div class="g_id_signin" data-type="standard"></div>
 
-  <div class="g_id_signin"
-       data-type="standard"
-       data-size="large"
-       data-theme="outline">
-  </div>
-
-  <p>Chưa có tài khoản? <a href="register.html">Đăng ký</a></p>
   <p id="message"></p>
 </main>
 
-<!-- ✅ POPUP CHỌN USERNAME -->
-<div id="username-popup">
-  <div class="popup-box">
-      <h2>Chọn tên hiển thị</h2>
-      <p>Hãy đặt tên của bạn để hoàn tất đăng nhập.</p>
-      <input id="new-username" placeholder="Nhập tên hiển thị..." />
-      <button id="confirm-username">Xác nhận</button>
-      <p id="popup-msg" style="color: var(--danger-color); margin-top: 8px;"></p>
-  </div>
-</div>
-
 <script>
-// Nếu đã đăng nhập → chuyển home
-if (localStorage.getItem("token")) {
-  window.location.href = "/home.html";
-}
-
-// --------------------------------------------------
-// GOOGLE LOGIN
-// --------------------------------------------------
-async function handleGoogleLogin(response) {
+async function googleLogin(response) {
   const res = await fetch("/auth/google-login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ id_token: response.credential })
   });
 
   const data = await res.json();
 
   if (data.newUser) {
-    // Hiện popup để chọn tên
-    localStorage.setItem("pending_email", data.email);
-    localStorage.setItem("pending_googleId", data.googleId);
-    document.getElementById("username-popup").style.display = "flex";
-    return;
+    localStorage.setItem("google_email", data.email);
+    localStorage.setItem("google_id", data.googleId);
+    return location.href = "choose-username.html";
   }
 
-  // Đã có username → đăng nhập
   localStorage.setItem("token", data.token);
-  localStorage.setItem("username", data.user.username);
-  window.location.href = "/home.html";
+  localStorage.setItem("username", data.username);
+  location.href = "home.html";
 }
-
-// --------------------------------------------------
-// GỬI USERNAME CHO TÀI KHOẢN GOOGLE MỚI
-// --------------------------------------------------
-document.getElementById("confirm-username").onclick = async () => {
-  const username = document.getElementById("new-username").value.trim();
-  const email = localStorage.getItem("pending_email");
-  const googleId = localStorage.getItem("pending_googleId");
-
-  const res = await fetch("/auth/set-username", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, googleId })
-  });
-
-  const data = await res.json();
-
-  if (data.error) {
-    document.getElementById("popup-msg").textContent = data.error;
-    return;
-  }
-
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("username", username);
-
-  window.location.href = "/home.html";
-};
-
-// --------------------------------------------------
-// LOGIN TRUYỀN THỐNG
-// --------------------------------------------------
-document.getElementById("login-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  const res = await fetch("/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  if (res.ok) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("username", data.user.username);
-    window.location.href = "/home.html";
-  } else {
-    document.getElementById("message").textContent = data.error;
-  }
-});
 </script>
 
 </body>
