@@ -1,38 +1,46 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chọn tên - Forum</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Chọn tên người dùng</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="form-container">
-  <h1>Chọn tên hiển thị</h1>
+<h2>Chọn tên người dùng</h2>
 
-  <input type="text" id="new-username" placeholder="Nhập tên hiển thị" required />
-
-  <button id="save-username">Lưu</button>
-  <p id="message"></p>
-</div>
+<input type="text" id="username" placeholder="Nhập tên hiển thị">
+<button id="save-btn">Lưu</button>
+<p id="message"></p>
 
 <script>
-document.getElementById("save-username").onclick = async () => {
-  const username = document.getElementById("new-username").value.trim();
-  const email = localStorage.getItem("pending_google_email");
-  const googleId = localStorage.getItem("pending_google_id");
+document.getElementById("save-btn").onclick = async () => {
+  const username = document.getElementById("username").value.trim();
+  const email = localStorage.getItem("google_email");
+  const googleId = localStorage.getItem("google_id");
+
+  if (!username) return;
 
   const res = await fetch("/auth/set-username", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, googleId })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, googleId, username })
   });
+
   const data = await res.json();
 
   if (res.ok) {
-    localStorage.removeItem("pending_google_email");
-    localStorage.removeItem("pending_google_id");
-    location.href = "home.html";
+    // ✅ Lưu token ngay sau khi đặt tên
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.user.username);
+    localStorage.setItem("userId", data.user.id);
+    localStorage.setItem("isAdmin", data.user.isAdmin);
+
+    // Xóa tạm email google
+    localStorage.removeItem("google_email");
+    localStorage.removeItem("google_id");
+
+    window.location.href = "/home.html"; // 👉 Vào luôn tài khoản
   } else {
     document.getElementById("message").textContent = data.error;
   }
