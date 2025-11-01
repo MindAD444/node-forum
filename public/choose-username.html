@@ -1,38 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Chọn tên hiển thị</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js" defer></script>
+
+  <style>
+    .choose-box {
+      background: var(--card-bg);
+      padding: 25px;
+      max-width: 450px;
+      margin: 100px auto;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px var(--shadow-light);
+      text-align: center;
+    }
+    .choose-box input {
+      padding: 12px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      margin-top: 12px;
+      background: var(--input-bg);
+      color: var(--text-color);
+    }
+    .choose-box button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background: var(--primary-color);
+      color: white;
+      font-size: 16px;
+    }
+    .choose-box button:hover {
+      background: var(--primary-hover);
+    }
+  </style>
 </head>
 <body>
 
-<main class="form-container">
+<nav class="navbar">
+  <div class="nav-right">
+    <a href="index.html">Trang chủ</a>
+  </div>
+</nav>
+
+<div class="choose-box">
   <h2>Chọn tên hiển thị</h2>
-  <input id="username" placeholder="Nhập tên..." />
-  <button id="save">Tiếp tục</button>
-  <p id="message"></p>
-</main>
+  <p>Tên này sẽ hiển thị công khai trên diễn đàn.</p>
+
+  <input type="text" id="username" placeholder="Nhập tên của bạn..." autocomplete="off" />
+  <button id="set-btn">Lưu tên</button>
+
+  <p id="msg" style="margin-top:10px;color:var(--danger-color)"></p>
+</div>
 
 <script>
-document.getElementById("save").onclick = async () => {
+document.getElementById("set-btn").onclick = async () => {
   const username = document.getElementById("username").value.trim();
   const email = localStorage.getItem("google_email");
   const googleId = localStorage.getItem("google_id");
 
+  if (!username) {
+    document.getElementById("msg").textContent = "Tên không được để trống!";
+    return;
+  }
+
   const res = await fetch("/auth/set-username", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, googleId, username })
   });
 
   const data = await res.json();
 
   if (res.ok) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("username", data.username);
-    location.href = "home.html";
+    // Success → Chuyển sang home
+    localStorage.removeItem("google_email");
+    localStorage.removeItem("google_id");
+
+    localStorage.setItem("username", username);
+
+    window.location.href = "/home.html";
   } else {
-    document.getElementById("message").textContent = data.error;
+    document.getElementById("msg").textContent = data.error;
   }
 };
 </script>

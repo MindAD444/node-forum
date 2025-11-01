@@ -4,21 +4,14 @@ let allComments = [];
 let commentOffset = 0;
 const firstLoad = 5;
 const stepLoad = 3;
-// Nhận token trả về từ callback Google
-const params = new URLSearchParams(window.location.search);
-if (params.get("token")) {
-  localStorage.setItem("token", params.get("token"));
-  localStorage.setItem("username", params.get("username"));
-  localStorage.setItem("userId", params.get("userId"));
-  localStorage.setItem("isAdmin", params.get("isAdmin") === "true");
-  window.location.href = "home.html";
-}
+
 /* =============== CHECK LOGIN =============== */
 document.addEventListener("DOMContentLoaded", () => {
   checkLoginStatus();
   loadPosts();
 
-  document.getElementById("logout-btn").addEventListener("click", logout);
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logout);
 
   document.getElementById("close-popup").onclick = () => {
     document.getElementById("comment-popup").classList.add("hidden");
@@ -28,20 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function checkLoginStatus() {
-  const username = localStorage.getItem("username");
   const token = localStorage.getItem("token");
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const username = localStorage.getItem("username");
   const userId = localStorage.getItem("userId");
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-  if (token && username) {
-    currentUser = { username, userId, isAdmin };
+  if (!token || !username) return;
 
-    document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
-    document.getElementById("login-link").classList.add("hidden");
-    document.getElementById("register-link").classList.add("hidden");
-    document.getElementById("logout-btn").classList.remove("hidden");
-    document.getElementById("create-link").classList.remove("hidden");
-  }
+  currentUser = { username, userId, isAdmin };
+
+  document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
+  document.getElementById("login-link")?.classList.add("hidden");
+  document.getElementById("register-link")?.classList.add("hidden");
+  document.getElementById("logout-btn")?.classList.remove("hidden");
+  document.getElementById("create-link")?.classList.remove("hidden");
 }
 
 function logout() {
@@ -61,9 +54,9 @@ async function loadPosts() {
       return;
     }
 
-    container.innerHTML = posts.map(post => `
+    container.innerHTML = posts
+      .map(post => `
       <div class="post-card">
-        <h2>${post.title}</h2>
 
         ${
           currentUser && (currentUser.isAdmin || currentUser.userId === post.author?._id)
@@ -71,9 +64,11 @@ async function loadPosts() {
             : ""
         }
 
+        <h2>${post.title}</h2>
+
         <p class="post-content">${post.content}</p>
 
-        ${post.files?.map(f => `<img src="${f}" alt="">`).join("") || ""}
+        ${post.files?.map(f => `<img src="${f}">`).join("") || ""}
 
         <div class="post-meta">
           👤 <b>${post.author?.username || "Ẩn danh"}</b> • 🕓 ${new Date(post.createdAt).toLocaleString()}
@@ -81,24 +76,22 @@ async function loadPosts() {
 
         <button class="toggle-comments-btn" data-post-id="${post._id}">💬 Bình luận</button>
       </div>
-    `).join("");
+    `)
+      .join("");
 
-    /* GẮN SỰ KIỆN XOÁ SAU KHI RENDER */
     document.querySelectorAll(".delete-post-btn").forEach(btn => {
       btn.onclick = () => deletePost(btn.dataset.postId);
     });
 
-    /* GẮN SỰ KIỆN MỞ COMMENT */
     document.querySelectorAll(".toggle-comments-btn").forEach(btn => {
       btn.onclick = () => openComments(btn.dataset.postId);
     });
-
   } catch (err) {
     console.error("Lỗi tải bài:", err);
   }
 }
 
-/* =============== POPUP COMMENTS =============== */
+/* =============== COMMENT POPUP =============== */
 function openComments(postId) {
   activePostId = postId;
   commentOffset = 0;
@@ -107,7 +100,6 @@ function openComments(postId) {
   loadComments();
 }
 
-/* =============== LOAD COMMENTS =============== */
 async function loadComments() {
   const res = await fetch(`/comments/${activePostId}`);
   allComments = await res.json();
@@ -140,7 +132,6 @@ function loadCommentChunk() {
     </div>
   `).join("");
 
-  /* GẮN SỰ KIỆN XOÁ SAU KHI RENDER */
   document.querySelectorAll(".delete-comment-btn").forEach(btn => {
     btn.onclick = () => deleteComment(btn.dataset.id);
   });
@@ -151,7 +142,7 @@ function loadCommentChunk() {
   );
 }
 
-/* =============== POST COMMENT =============== */
+/* =============== ADD COMMENT =============== */
 document.getElementById("comment-form").onsubmit = async (e) => {
   e.preventDefault();
   const content = document.getElementById("comment-input").value.trim();
@@ -161,7 +152,7 @@ document.getElementById("comment-form").onsubmit = async (e) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     body: JSON.stringify({ content }),
   });
@@ -171,24 +162,24 @@ document.getElementById("comment-form").onsubmit = async (e) => {
 };
 
 /* =============== DELETE COMMENT =============== */
-async function deleteComment(commentId) {
+async function deleteComment(id) {
   if (!confirm("Xoá bình luận này?")) return;
 
-  await fetch(`/comments/${commentId}`, {
+  await fetch(`/comments/${id}`, {
     method: "DELETE",
-    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
 
   loadComments();
 }
 
 /* =============== DELETE POST =============== */
-async function deletePost(postId) {
-  if (!confirm("Xoá bài viết?")) return;
+async function deletePost(id) {
+  if (!confirm("Xoá bài viết này?")) return;
 
-  await fetch(`/posts/${postId}`, {
+  await fetch(`/posts/${id}`, {
     method: "DELETE",
-    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
 
   loadPosts();

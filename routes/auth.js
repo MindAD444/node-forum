@@ -33,13 +33,14 @@ router.post('/register/verify', async (req, res) => {
   if (parseInt(code) !== record.code) return res.status(400).json({ error: "Mã không đúng." });
 
   const hashed = await bcrypt.hash(record.password, 10);
+
   await User.create({ username: record.username, email, password: hashed });
 
   delete verificationCodes[email];
   res.json({ message: "Đăng ký thành công." });
 });
 
-// ---------------- LOGIN NORMAL ----------------
+// ---------------- LOGIN (NORMAL) ----------------
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ $or: [{ username }, { email: username }] });
@@ -47,8 +48,13 @@ router.post('/login', async (req, res) => {
   if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(400).json({ error: "Sai thông tin đăng nhập." });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-  res.json({ token, user: { id: user._id, username: user.username } });
+  const token = jwt.sign(
+    { id: user._id, username: user.username, isAdmin: user.isAdmin },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  res.json({ token, user: { id: user._id, username: user.username, isAdmin: user.isAdmin } });
 });
 
 // ---------------- GOOGLE LOGIN ----------------
@@ -58,38 +64,67 @@ router.post("/google-login", async (req, res) => {
 
     const ticket = await googleClient.verifyIdToken({
       idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    const payload = ticket.getPayload();
-    const email = payload.email;
-    const googleId = payload.sub;
+    const data = ticket.getPayload();
+    const email = data.email;
+    const googleId = data.sub;
 
     let user = await User.findOne({ email });
 
+    // ⭕ chưa có → chuyển sang trang chọn username
     if (!user) {
-      return res.json({ newUser: true, email, googleId });
+      return res.json({
+        newUser: true,
+        email,
+        googleId
+      });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.json({ success: true, token, username: user.username });
+    // ✅ user tồn tại → login
+    const token = jwt.sign(
+      { id: user._id, username: user.username, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      success: true,
+      token,
+      user: { id: user._id, username: user.username, isAdmin: user.isAdmin }
+    });
 
   } catch (err) {
-    res.status(400).json({ error: "Google Login Failed" });
+    console.error("Google Login Error:", err);
+    res.status(400).json({ error: "Đăng nhập Google thất bại." });
   }
 });
 
-// ---------------- SET USERNAME FOR NEW GOOGLE USERS ----------------
+// ---------------- GOOGLE SET USERNAME (FIRST TIME LOGIN) ----------------
 router.post("/set-username", async (req, res) => {
   const { email, googleId, username } = req.body;
 
-  if (await User.findOne({ username })) 
-    return res.status(400).json({ error: "Tên đã tồn tại." });
+  if (!email || !googleId || !username)
+    return res.status(400).json({ error: "Thiếu dữ liệu." });
+
+  const exists = await User.findOne({ username });
+  if (exists) return res.status(400).json({ error: "Tên đã tồn tại, hãy chọn tên khác." });
 
   const user = await User.create({ email, googleId, username });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-  res.json({ success: true, token, username });
+  const token = jwt.sign(
+    { id: user._id, username: user.username, isAdmin: false },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return res.json({
+    success: true,
+    token,
+    user: { id: user._id, username: user.username, isAdmin: false }
+  });
 });
+
 
 export default router;
