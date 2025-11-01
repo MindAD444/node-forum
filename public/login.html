@@ -21,7 +21,7 @@
   <form id="login-form">
     <input id="username" placeholder="Tên hoặc Email" required>
     <input id="password" type="password" placeholder="Mật khẩu" required>
-    <button>Đăng nhập</button>
+    <button type="submit" >Đăng nhập</button>
   </form>
 
   <div id="g_id_onload"
@@ -32,6 +32,7 @@
   <p id="message"></p>
 </main>
 <script>
+/* ======= LOGIN BẰNG GOOGLE ======= */
 async function googleLogin(response) {
   const res = await fetch("/auth/google-login", {
     method: "POST",
@@ -41,23 +42,54 @@ async function googleLogin(response) {
 
   const data = await res.json();
 
-  if (data.status === "NEW_USER") {
-    // Lưu tạm thông tin google user chờ chọn username
-    localStorage.setItem("pending_google_email", data.email);
-    localStorage.setItem("pending_google_id", data.googleId);
-    return window.location.href = "choose-username.html";
+  if (data.newUser) {
+    localStorage.setItem("google_email", data.email);
+    localStorage.setItem("google_id", data.googleId);
+    return window.location.href = "/choose-username.html";
   }
 
-  if (data.status === "OK") {
-    // Đăng nhập hoàn tất
+  // Đăng nhập thành công
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("username", data.user.username);
+  localStorage.setItem("userId", data.user.id);
+  localStorage.setItem("isAdmin", data.user.isAdmin);
+
+  window.location.href = "/home.html";
+}
+
+/* ======= LOGIN TRUYỀN THỐNG ======= */
+document.getElementById("login-form").onsubmit = async (e) => {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const msg = document.getElementById("message");
+
+  msg.textContent = "Đang xử lý...";
+
+  const res = await fetch("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("username", data.user.username);
     localStorage.setItem("userId", data.user.id);
     localStorage.setItem("isAdmin", data.user.isAdmin);
-    return window.location.href = "home.html";
-  }
 
-  alert("Đăng nhập Google thất bại.");
+    window.location.href = "/home.html";
+  } else {
+    msg.textContent = data.error;
+  }
+};
+
+/* ======= AUTO REDIRECT NẾU ĐÃ ĐĂNG NHẬP ======= */
+if (localStorage.getItem("token")) {
+  window.location.href = "home.html";
 }
 </script>
 
