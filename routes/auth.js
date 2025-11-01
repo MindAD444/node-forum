@@ -101,4 +101,29 @@ router.post("/google-login", async (req, res) => {
   }
 });
 
+// ---------------- GOOGLE SET USERNAME (FIRST TIME LOGIN) ----------------
+router.post("/set-username", async (req, res) => {
+  const { email, googleId, username } = req.body;
+
+  if (!email || !googleId || !username)
+    return res.status(400).json({ error: "Thiếu dữ liệu." });
+
+  const exists = await User.findOne({ username });
+  if (exists) return res.status(400).json({ error: "Tên đã tồn tại, hãy chọn tên khác." });
+
+  const user = await User.create({ email, googleId, username });
+
+  const token = jwt.sign(
+    { id: user._id, username: user.username, isAdmin: false },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return res.json({
+    success: true,
+    token,
+    user: { id: user._id, username: user.username, isAdmin: false }
+  });
+});
+
 export default router;
