@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '../utils/mailer.js';
 import { OAuth2Client } from "google-auth-library";
+import { connectDB } from "../config/db.js";
+await connectDB();
 
 const router = express.Router();
 const verificationCodes = {};

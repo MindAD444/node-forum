@@ -5,7 +5,8 @@ import auth from '../middleware/auth.js';
 import { v2 as cloudinary } from 'cloudinary'; 
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
-
+import { connectDB } from "../config/db.js";
+await connectDB();
 const router = express.Router();
 
 // Cấu hình Cloudinary Storage

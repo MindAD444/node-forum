@@ -9,8 +9,9 @@ import authRoutes from "./routes/auth.js";
 import postRoutes from "./routes/posts.js";
 import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
-
+import { connectDB } from "./config/db.js";
 dotenv.config();
+await connectDB();
 const app = express();
 // Middleware chung
 app.use(cors());
