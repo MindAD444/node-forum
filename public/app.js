@@ -5,11 +5,54 @@ let commentOffset = 0;
 const firstLoad = 5;
 const stepLoad = 3;
 
-/* =============== CHECK LOGIN =============== */
+// --- LOGIC ẨN/HIỆN NAVBAR KHI CUỘN ---
+let lastScrollTop = 0; 
+const navbar = document.querySelector(".navbar"); 
+
+window.addEventListener("scroll", function() {
+  let currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+  if (currentScroll > 50) { 
+    if (currentScroll > lastScrollTop) {
+      navbar.classList.add("navbar-hidden");
+    } else {
+      navbar.classList.remove("navbar-hidden");
+    }
+  } else {
+    navbar.classList.remove("navbar-hidden");
+  }
+  lastScrollTop = currentScroll <= 0 ? 0 : currentScroll; 
+}, false);
+// --- KẾT THÚC LOGIC NAVBAR ---
+
+
+/* =============== DOMContentLoaded & SIDEBAR LOGIC =============== */
 document.addEventListener("DOMContentLoaded", () => {
   checkLoginStatus();
   loadPosts();
 
+  // --- LOGIC MỞ/ĐÓNG SIDEBAR MỚI ---
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const sidebar = document.getElementById("sidebar");
+  const closeSidebarBtn = document.getElementById("close-sidebar-btn");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  function openSidebar() {
+    sidebar.classList.add("open");
+    overlay.classList.add("open");
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("open");
+  }
+
+  if (hamburgerBtn) hamburgerBtn.addEventListener("click", openSidebar);
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener("click", closeSidebar);
+  if (overlay) overlay.addEventListener("click", closeSidebar);
+  // --- KẾT THÚC LOGIC SIDEBAR ---
+
+
+  // Logic cũ
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logout);
 
@@ -20,29 +63,76 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("load-more-comments").onclick = () => loadCommentChunk();
 });
 
+
+/* =============== CHECK LOGIN (ĐÃ CẬP NHẬT) =============== */
 function checkLoginStatus() {
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
   const userId = localStorage.getItem("userId");
   const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-  if (!token || !username) return;
+  // Lấy tham chiếu đến các phần tử mới
+  const sidebarAuth = document.getElementById("sidebar-auth");
+  const sidebarGuest = document.getElementById("sidebar-guest");
+  const loginLink = document.getElementById("login-link");
+  const registerLink = document.getElementById("register-link");
+  const usernameDisplayNav = document.getElementById("username-display-nav");
+  const usernameDisplaySidebar = document.getElementById("username-display-sidebar");
 
-  currentUser = { username, userId, isAdmin };
+  if (token && username) {
+    // === ĐÃ ĐĂNG NHẬP ===
+    currentUser = { username, userId, isAdmin };
 
-  document.getElementById("username-display").textContent = `Xin chào, ${username}!`;
-  document.getElementById("login-link")?.classList.add("hidden");
-  document.getElementById("register-link")?.classList.add("hidden");
-  document.getElementById("logout-btn")?.classList.remove("hidden");
-  document.getElementById("create-link")?.classList.remove("hidden");
+    // 1. Ẩn link Đăng nhập/Đăng ký bên ngoài navbar
+    if (loginLink) loginLink.classList.add("hidden");
+    if (registerLink) registerLink.classList.add("hidden");
+
+    // 2. Hiển thị tên trên navbar (tùy chọn)
+    if (usernameDisplayNav) usernameDisplayNav.textContent = `Xin chào, ${username}!`;
+
+    // 3. Hiển thị nội dung sidebar cho người đã đăng nhập
+    if (sidebarAuth) sidebarAuth.classList.remove("hidden");
+    if (sidebarGuest) sidebarGuest.classList.add("hidden");
+    
+    // 4. Cập nhật tên trong sidebar
+    if (usernameDisplaySidebar) usernameDisplaySidebar.textContent = `Xin chào, ${username}!`;
+
+    // 5. Hiển thị các nút chức năng trong sidebar
+    document.getElementById("logout-btn")?.classList.remove("hidden");
+    document.getElementById("create-link")?.classList.remove("hidden");
+    if (currentUser.isAdmin) {
+      document.getElementById("admin-link")?.classList.remove("hidden");
+    }
+
+  } else {
+    // === CHƯA ĐĂNG NHẬP ===
+    currentUser = null;
+
+    // 1. Hiển thị link Đăng nhập/Đăng ký bên ngoài navbar
+    if (loginLink) loginLink.classList.remove("hidden");
+    if (registerLink) registerLink.classList.remove("hidden");
+
+    // 2. Ẩn tên trên navbar
+    if (usernameDisplayNav) usernameDisplayNav.textContent = "";
+
+    // 3. Hiển thị nội dung sidebar cho khách
+    if (sidebarAuth) sidebarAuth.classList.add("hidden");
+    if (sidebarGuest) sidebarGuest.classList.remove("hidden");
+    
+    // 4. Ẩn các nút chức năng (vì chúng nằm trong #sidebar-auth đã bị ẩn)
+    document.getElementById("logout-btn")?.classList.add("hidden");
+    document.getElementById("create-link")?.classList.add("hidden");
+    document.getElementById("admin-link")?.classList.add("hidden");
+  }
 }
+
 
 function logout() {
   localStorage.clear();
   location.reload();
 }
 
-/* =============== LOAD POSTS =============== */
+/* =============== LOAD POSTS (Giữ nguyên) =============== */
 async function loadPosts() {
   try {
     const res = await fetch("/posts");
@@ -91,7 +181,7 @@ async function loadPosts() {
   }
 }
 
-/* =============== COMMENT POPUP =============== */
+/* =============== COMMENT POPUP (Giữ nguyên) =============== */
 function openComments(postId) {
   activePostId = postId;
   commentOffset = 0;
@@ -142,7 +232,7 @@ function loadCommentChunk() {
   );
 }
 
-/* =============== ADD COMMENT =============== */
+/* =============== ADD COMMENT (Giữ nguyên) =============== */
 document.getElementById("comment-form").onsubmit = async (e) => {
   e.preventDefault();
   const content = document.getElementById("comment-input").value.trim();
@@ -161,7 +251,7 @@ document.getElementById("comment-form").onsubmit = async (e) => {
   loadComments();
 };
 
-/* =============== DELETE COMMENT =============== */
+/* =============== DELETE COMMENT (Giữ nguyên) =============== */
 async function deleteComment(id) {
   if (!confirm("Xoá bình luận này?")) return;
 
@@ -173,7 +263,7 @@ async function deleteComment(id) {
   loadComments();
 }
 
-/* =============== DELETE POST =============== */
+/* =============== DELETE POST (Giữ nguyên) =============== */
 async function deletePost(id) {
   if (!confirm("Xoá bài viết này?")) return;
 

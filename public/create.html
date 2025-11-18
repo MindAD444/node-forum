@@ -8,8 +8,8 @@
 </head>
 <body>
   <nav class="navbar">
-    <div class="nav-left">
-      <a href="home.html" class="logo">💬 Forum</a>
+    <div class="nav-right">
+      <a href="home.html" class="nav-brand">Forum</a>
     </div>
     <div class="nav-right">
       <a href="login.html" id="login-link">Đăng nhập</a>
@@ -60,7 +60,8 @@
       if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
 
       // Gán sự kiện chuyển theme
-      document.getElementById("theme-toggle").addEventListener("click", () => {
+      // Dù đã có trong app.js, tôi để lại đây nếu bạn dùng script riêng
+      document.getElementById("theme-toggle")?.addEventListener("click", () => {
         document.body.classList.toggle("dark");
         localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
       });

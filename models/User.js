@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: { type: String }, // Có thể rỗng nếu đăng nhập bằng Google
   googleId: { type: String, unique: true, sparse: true },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

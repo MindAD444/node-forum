@@ -8,112 +8,59 @@
 </head>
 <body>
   <nav class="navbar">
-    <div class="nav-left"><span id="username-display"></span></div>
     <div class="nav-right">
       <a href="home.html">Trang chủ</a>
-      <button id="logout-btn">Đăng xuất</button>
     </div>
   </nav>
 
   <main class="container">
     <h1>🛠️ Quản lý bài viết chờ duyệt</h1>
-    <div id="admin-posts" class="post-list">Đang tải...</div>
+    <div id="pending-posts" class="post-list">Đang tải...</div>
   </main>
   <script src="theme.js"></script>
   <script src="app.js"></script>
   <script>
   document.addEventListener("DOMContentLoaded", loadPendingPosts);
+async function loadPendingPosts() {
+  const res = await fetch("/admin/pending", {
+    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+  });
+  const posts = await res.json();
 
-  async function loadPendingPosts() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "login.html";
-      return;
-    }
+  const container = document.getElementById("pending-posts");
+  container.innerHTML = posts.length
+    ? posts.map(p => `
+      <div class="post-card">
+        <h3>${p.title}</h3>
+        <p>${p.content}</p>
+        <small>👤 ${p.author?.username || "Ẩn danh"}</small><br>
+        
+        <div class="admin-buttons">
+          <button onclick="approvePost('${p._id}')">✅ Duyệt</button>
+          <button onclick="rejectPost('${p._id}')">❌ Xóa</button>
+        </div>
+      </div>
+    `).join("")
+    : "<p>Không có bài nào chờ duyệt.</p>";
+}
 
-    try {
-      const res = await fetch("/admin/posts", {
-        headers: { "Authorization": "Bearer " + token },
-      });
-      const posts = await res.json();
+async function approvePost(id) {
+  await fetch(`/admin/approve/${id}`, {
+    method: "PUT",
+    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+  });
+  loadPendingPosts();
+}
 
-      const container = document.getElementById("admin-posts");
-      container.innerHTML = "";
-      if (!posts.length) {
-        container.innerHTML = "<p>Không có bài nào chờ duyệt.</p>";
-        return;
-      }
+async function rejectPost(id) {
+  await fetch(`/admin/reject/${id}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+  });
+  loadPendingPosts();
+}
 
-      posts.forEach((post) => {
-        let fileHTML = "";
-        if (post.files && post.files.length > 0) {
-          fileHTML = `<div class="file-section">`;
-          post.files.forEach(f => {
-            const ext = f.split('.').pop().toLowerCase();
-            if (["jpg","jpeg","png","gif"].includes(ext)) {
-              fileHTML += `<img src="${f}" class="post-image" alt="file" />`;
-            } else {
-              fileHTML += `<a href="${f}" target="_blank">${f.split("/").pop()}</a><br>`;
-            }
-          });
-          fileHTML += `</div>`;
-        }
-
-        const div = document.createElement("div");
-        div.className = "post-card";
-        div.innerHTML = `
-          <h2>${post.title}</h2>
-          <p>${post.content}</p>
-          ${fileHTML}
-          <div class="post-meta">
-            👤 <b>${post.author?.username || "Ẩn danh"}</b>
-            &nbsp;•&nbsp; 🕓 ${new Date(post.createdAt).toLocaleString()}
-          </div>
-          <div class="admin-actions">
-            <button class="approve-btn" data-id="${post._id}">✅ Duyệt</button>
-            <button class="delete-btn" data-id="${post._id}">🗑️ Xóa</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-
-      document.querySelectorAll(".approve-btn").forEach(btn =>
-        btn.addEventListener("click", () => approvePost(btn.dataset.id, btn))
-      );
-      document.querySelectorAll(".delete-btn").forEach(btn =>
-        btn.addEventListener("click", () => deletePost(btn.dataset.id, btn))
-      );
-    } catch {
-      document.getElementById("admin-posts").innerHTML = "<p>Lỗi khi tải danh sách.</p>";
-    }
-  }
-
-  async function approvePost(id, btn) {
-    const token = localStorage.getItem("token");
-    btn.disabled = true;
-    btn.textContent = "⏳ Đang duyệt...";
-    try {
-      const res = await fetch(`/admin/post/${id}`, {
-        method: "PUT",
-        headers: { "Authorization": "Bearer " + token },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        btn.textContent = "✅ Đã duyệt";
-        btn.classList.add("approved");
-        setTimeout(() => btn.closest(".post-card").remove(), 1000);
-      } else {
-        alert(data.message || "Không thể duyệt bài");
-        btn.disabled = false;
-        btn.textContent = "✅ Duyệt";
-      }
-    } catch {
-      alert("Lỗi kết nối server.");
-      btn.disabled = false;
-      btn.textContent = "✅ Duyệt";
-    }
-  }
-
+document.addEventListener("DOMContentLoaded", loadPendingPosts);
   async function deletePost(id, btn) {
     const token = localStorage.getItem("token");
     if (!confirm("Bạn có chắc muốn xóa bài này?")) return;

@@ -2,16 +2,20 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chọn tên người dùng</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>Chọn tên người dùng</h2>
+  <main class="form-container">
+    <h2>Chọn tên người dùng</h2>
+    <p>Đây là lần đầu bạn đăng nhập bằng Google. Hãy chọn một tên hiển thị.</p>
+    <input type="text" id="username" placeholder="Nhập tên hiển thị">
+    <button id="save-btn">Lưu</button>
+    <p id="message"></p>
+  </main>
 
-<input type="text" id="username" placeholder="Nhập tên hiển thị">
-<button id="save-btn">Lưu</button>
-<p id="message"></p>
 
 <script>
 document.getElementById("save-btn").onclick = async () => {

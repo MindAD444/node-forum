@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đăng nhập - Forum</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -20,7 +19,10 @@
 
   <form id="login-form">
     <input id="username" placeholder="Tên hoặc Email" required>
+    <div class="input-group">
     <input id="password" type="password" placeholder="Mật khẩu" required>
+    <span class="toggle-password" data-target="password">👁️</span>
+    </div>
     <button type="submit" >Đăng nhập</button>
   </form>
 
@@ -28,9 +30,10 @@
        data-client_id="572721154448-vc3e2ehq2o5ci7liulj54bepri454c58.apps.googleusercontent.com"
        data-callback="googleLogin"></div>
   <div class="g_id_signin" data-type="standard"></div>
-
+  <p>Chưa có tài khoản?<a href="register.html">Đăng ký<p/>
   <p id="message"></p>
 </main>
+<script src="theme.js"></script>
 <script>
 /* ======= LOGIN BẰNG GOOGLE ======= */
 async function googleLogin(response) {
@@ -86,7 +89,19 @@ document.getElementById("login-form").onsubmit = async (e) => {
     msg.textContent = data.error;
   }
 };
-
+// Logic Ẩn/Hiện Mật khẩu (Cho cả 2 trường)
+        document.querySelectorAll('.toggle-password').forEach(toggleBtn => {
+            toggleBtn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
+                this.textContent = type === 'text' ? '🔒' : '👁️';
+            });
+        });
 /* ======= AUTO REDIRECT NẾU ĐÃ ĐĂNG NHẬP ======= */
 if (localStorage.getItem("token")) {
   window.location.href = "home.html";

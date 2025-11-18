@@ -30,10 +30,9 @@
         <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu" required minlength="6"/>
         <span class="toggle-password" data-target="confirm-password">👁️</span>
       </div>
-      <!-- Turnstile widget -->
       <button type="submit">Gửi mã xác thực</button>
+      <p>Đã có tài khoản?<a href="login.html">Đăng nhập</a>
     </form>
-
     <form id="register-verify-form" class="hidden">
       <p id="verify-info">Mã xác thực 6 số đã được gửi đến email <strong id="verify-email-display"></strong>. Vui lòng kiểm tra hộp thư.</p>
       <input type="text" id="verification-code" placeholder="Mã xác thực (OTP) 6 số" required maxlength="6" pattern="\d{6}" title="Mã xác thực phải là 6 chữ số"/>
@@ -173,4 +172,3 @@
   </script>
 </body>
 </html>
-

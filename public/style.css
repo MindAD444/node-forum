@@ -2,45 +2,50 @@
 / RESET + BIẾN TOÀN CỤC /
 / =================================== */
 *, *::before, *::after {
-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 :root {
---primary-color: #007bff;
---primary-hover: #0056b3;
---danger-color: #dc2626;
---secondary-color: #6c757d;
---text-color: #333;
---text-light: #6b7280;
---bg-color: #f4f4f4;
---border-color: #e5e7eb;
---shadow-light: rgba(0, 0, 0, 0.1);
---card-bg: #ffffff;
---input-bg: #f9f9f9;
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --danger-color: #dc2626;
+  --danger-hover: #a00000; /* Màu đỏ đậm hơn */
+  --secondary-color: #6c757d;
+  --text-color: #333;
+  --text-light: #6b7280;
+  --bg-color: #f4f4f4;
+  --border-color: #e5e7eb;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --card-bg: #ffffff;
+  --input-bg: #f9f9f9;
 }
 
 /* DARK MODE */
 body.dark {
---bg-color: #121212;
---text-color: #e0e0e0;
---primary-color: #4da3ff;
---primary-hover: #5dbbff;
---border-color: #333;
---shadow-light: rgba(255, 255, 255, 0.1);
---card-bg: #1a1a1a;
---input-bg: #1e1e1e;
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --primary-color: #4da3ff;
+  --primary-hover: #5dbbff;
+  --danger-color: #ef4444; /* Đỏ sáng hơn trong dark mode */
+  --danger-hover: #cc0000;
+  --border-color: #333;
+  --shadow-light: rgba(255, 255, 255, 0.1);
+  --card-bg: #1a1a1a;
+  --input-bg: #1e1e1e;
 }
 
 /* =================================== /
 / BODY /
 / =================================== */
 body {
-font-family: 'Segoe UI', Tahoma, sans-serif;
-background-color: var(--bg-color);
-color: var(--text-color);
-margin: 0;
-padding-top: 65px;
-transition: background 0.3s ease, color 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding-top: 65px;
+  transition: background 0.3s ease, color 0.3s ease;
+  font-size: 16px; 
+  line-height: 1.6;
 }
 
 .hidden { display: none !important; }
@@ -49,95 +54,263 @@ transition: background 0.3s ease, color 0.3s ease;
 / NAVBAR /
 / =================================== */
 .navbar {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-background: var(--card-bg);
-box-shadow: 0 2px 6px var(--shadow-light);
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 0.7rem 1.2rem;
-z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--card-bg);
+  box-shadow: 0 2px 6px var(--shadow-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1.2rem;
+  z-index: 1000;
+  text-align: left; /* FIX căn lề trái */
 }
 
-.nav-left span {
-font-weight: 700;
-color: var(--primary-color);
-font-size: 1.1rem;
+.navbar-hidden {
+  transform: translateY(-100%);
+}
+
+.nav-left {
+  display: flex; /* FIX mobile stacking */
+  align-items: center; 
+}
+
+.nav-brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--primary-color);
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.hamburger-btn {
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 0 10px;
+  border-radius: 8px;
+  transition: background 0.2s, transform 0.05s;
+}
+.hamburger-btn:hover {
+  background: var(--input-bg);
+}
+.hamburger-btn:active {
+  transform: scale(0.95);
 }
 
 .nav-right {
-display: flex;
-align-items: center;
-gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.nav-right a,
-.nav-right button {
-padding: 0.5rem 1rem;
-border-radius: 8px;
-font-weight: 600;
-text-decoration: none;
-transition: 0.2s;
-border: 1px solid transparent;
-background: none;
-color: var(--text-color);
-cursor: pointer;
+/* Nút Đăng nhập/Đăng ký ngoài navbar */
+.nav-right a {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s;
+  border: 1px solid transparent;
+  background: var(--primary-color);
+  color: white;
+  transition: background 0.2s, transform 0.05s;
+}
+.nav-right a:hover {
+  background: var(--primary-hover);
+}
+.nav-right a:active {
+  background: var(--primary-hover);
+  transform: scale(0.98);
 }
 
-#login-link, #register-link {
-background: var(--primary-color);
-color: white;
-}
-#login-link:hover, #register-link:hover {
-background: var(--primary-hover);
-}
-
-#logout-btn {
-border: 1px solid var(--danger-color);
-color: var(--danger-color);
-}
-#logout-btn:hover {
-background: var(--danger-color);
-color: white;
+#username-display-nav {
+  font-weight: 600;
+  color: var(--text-light);
+  margin-right: 10px;
 }
 
 /* Dark Mode Toggle */
 .theme-toggle {
-background: none;
-border: none;
-font-size: 1.3rem;
-cursor: pointer;
-padding: 6px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 6px;
 }
+
+/* =================================== /
+/ SIDEBAR MỚI /
+/ =================================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -300px; 
+  width: 300px;
+  max-width: 80%; 
+  height: 100%;
+  background: var(--card-bg);
+  box-shadow: 4px 0 12px var(--shadow-light);
+  z-index: 1002;
+  transition: left 0.3s ease-in-out;
+  padding: 20px;
+  padding-top: 60px; 
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  left: 0; 
+}
+
+/* Lớp phủ mờ */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.sidebar-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.close-sidebar-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 2.2rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 0 10px;
+  line-height: 1;
+  width: auto;
+  transition: color 0.2s, transform 0.05s;
+}
+.close-sidebar-btn:hover {
+  color: var(--danger-color);
+}
+.close-sidebar-btn:active {
+  transform: scale(0.95);
+}
+
+#username-display-sidebar {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 20px;
+  word-break: break-all;
+}
+
+/* CÁC LIÊN KẾT CHUNG TRONG SIDEBAR (Đăng bài, Quản trị, Trang chủ) */
+.sidebar-link {
+  display: block;
+  width: 100%;
+  padding: 12px 10px;
+  text-decoration: none;
+  color: var(--text-color);
+  border-radius: 8px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.05s, border-color 0.2s;
+}
+
+/* Hover/Active cho các link thường (Đăng bài, Quản trị) */
+.sidebar-link:hover {
+  background: var(--input-bg);
+}
+.sidebar-link:active {
+  background: var(--primary-color);
+  color: white; /* Đổi màu chữ khi nhấn */
+  transform: scale(0.98);
+}
+
+
+/* CÁC NÚT HÀNH ĐỘNG CHÍNH (Đăng nhập/Đăng ký trong sidebar) */
+.sidebar-action-link {
+  background: var(--primary-color);
+  color: white !important; 
+  font-weight: 600;
+  text-align: center; 
+  margin-top: 10px;
+}
+
+.sidebar-action-link:hover {
+  background: var(--primary-hover);
+}
+.sidebar-action-link:active {
+  background: var(--primary-color); /* Giữ nguyên màu khi nhấn */
+  transform: scale(0.98);
+}
+
+
+/* HIỆU ỨNG RIÊNG CHO NÚT ĐĂNG XUẤT (TRONG SUỐT CÓ VIỀN ĐỎ) */
+.sidebar-logout-btn {
+  background: transparent !important;
+  color: var(--danger-color) !important;
+  border: 2px solid var(--danger-color);
+  font-weight: 600;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.sidebar-logout-btn:hover {
+  background: var(--input-bg) !important;
+  color: var(--danger-color) !important;
+}
+
+.sidebar-logout-btn:active {
+  /* Hiệu ứng yêu cầu: cả nút chuyển thành màu đỏ khi nhấn */
+  background: var(--danger-color) !important;
+  color: white !important;
+  transform: scale(0.98);
+}
+
 
 /* =================================== /
 / POSTS /
 / =================================== */
 .container {
-max-width: 900px;
-margin: auto;
-padding: 20px;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
 }
 
 .post-list {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
 }
 
 .post-card {
-background: var(--card-bg);
-padding: 20px;
-border-radius: 12px;
-box-shadow: 0 3px 10px var(--shadow-light);
-border-left: 4px solid var(--primary-color);
-transition: 0.2s;
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light);
+  border-left: 4px solid var(--primary-color);
+  transition: 0.2s;
+  position: relative; /* THÊM: Cho phép định vị nút xóa */
+  padding-right: 60px; /* THÊM: Đảm bảo nội dung không bị nút xóa post che */
 }
 .post-card:hover {
-transform: translateY(-3px);
+  transform: translateY(-3px);
 }
 
 /* =================================== /
@@ -145,241 +318,260 @@ transform: translateY(-3px);
 / =================================== */
 .post-card img,
 .comment-item img {
-max-width: 100%;
-max-height: 280px;
-object-fit: cover;
-border-radius: 8px;
-margin-top: 8px;
-cursor: pointer;
-transition: 0.2s;
+  max-width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 .post-card img:hover,
 .comment-item img:hover {
-transform: scale(1.03);
+  transform: scale(1.03);
 }
 
 /* IMAGE VIEWER */
 #img-viewer {
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.85);
-display: none;
-justify-content: center;
-align-items: center;
-z-index: 3000;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
 }
 #img-viewer img {
-max-width: 90%;
-max-height: 90%;
-border-radius: 10px;
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
 }
 
 /* =================================== /
 / COMMENT SECTION /
 / =================================== */
 .comment-item {
-background: var(--input-bg);
-padding: 12px;
-border-radius: 8px;
-border-left: 3px solid var(--primary-color);
-margin-top: 10px;
+  background: var(--input-bg);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+  margin-top: 10px;
+  position: relative; /* Đã có */
+  padding-right: 40px; /* THÊM: Đảm bảo nội dung comment không bị nút xóa che */
 }
 
 .toggle-comments-btn {
-border: 1px solid var(--primary-color);
-background: none;
-color: var(--primary-color);
-padding: 6px 10px;
-border-radius: 6px;
-cursor: pointer;
+  border: 1px solid var(--primary-color);
+  background: none;
+  color: var(--primary-color);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 .toggle-comments-btn:hover {
-background: var(--primary-color);
-color: white;
+  background: var(--primary-color);
+  color: white;
 }
+.toggle-comments-btn:active {
+  transform: scale(0.98);
+}
+
 
 .comment-form textarea,
 .reply-box textarea {
-width: 100%;
-background: var(--input-bg);
-border-radius: 6px;
-border: 1px solid var(--border-color);
-padding: 8px;
-margin-top: 6px;
+  width: 100%;
+  background: var(--input-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 8px;
+  margin-top: 6px;
 }
 
 .comment-form button,
 .reply-box button {
-background: var(--primary-color);
-border-radius: 6px;
-padding: 6px 12px;
-margin-top: 6px;
-cursor: pointer;
-color: white;
+  background: var(--primary-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-top: 6px;
+  cursor: pointer;
+  color: white;
+}
+.comment-form button:active,
+.reply-box button:active {
+  transform: scale(0.98);
 }
 
 /* Nút trả lời */
 .reply-btn {
-font-size: 0.85rem;
-color: var(--primary-color);
-background: none;
-border: none;
-cursor: pointer;
-padding: 0;
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 /* =================================== /
-/ RESPONSIVE /
+/ RESPONSIVE & FORM STYLES /
 / =================================== */
 @media (max-width: 768px) {
-.navbar {
-flex-direction: column;
+  /* Ẩn các nút đăng nhập/ký trên mobile để ưu tiên sidebar */
+  #login-link, #register-link {
+    display: none;
+  }
 }
-}
+
 .form-container, .create-post-container {
-background: var(--card-bg);
-color: var(--text-color);
-padding: 25px 35px;
-border-radius: 12px;
-box-shadow: 0 3px 10px var(--shadow-light);
-width: 90%;
-max-width: 500px;
-margin: 80px auto 20px;
-text-align: center;
-transition: background 0.3s, color 0.3s;
+  background: var(--card-bg);
+  color: var(--text-color);
+  padding: 25px 35px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light);
+  width: 90%;
+  max-width: 500px;
+  margin: 80px auto 20px;
+  text-align: center;
+  transition: background 0.3s, color 0.3s;
 }
 
 .form-container h1, .create-post-container h1 {
-color: var(--primary-color);
-font-size: 1.8rem;
-margin-bottom: 20px;
+  color: var(--primary-color);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
 }
 
 input, textarea {
-background-color: var(--input-bg);
-color: var(--text-color);
-border: 1px solid var(--border-color);
-border-radius: 6px;
-padding: 12px;
-width: 100%;
-margin-bottom: 12px;
-font-size: 15px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 15px;
 }
 input:focus, textarea:focus {
-border-color: var(--primary-color);
-outline: none;
-box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
 }
 
 button {
-background: var(--primary-color);
-color: #fff;
-border: none;
-padding: 12px;
-border-radius: 6px;
-font-size: 16px;
-cursor: pointer;
-width: 100%;
-transition: background 0.2s, transform 0.2s;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
 }
 button:hover {
-background: var(--primary-hover);
-transform: scale(1.02);
+  background: var(--primary-hover);
+  transform: scale(1.02);
 }
+button:active {
+  transform: scale(0.98);
+}
+
 /*======================= /
 / PASSWORD TOGGLE STYLES /
 / ====================== */
 
 .input-group {
-position: relative;
-margin-bottom: 12px; /* Kế thừa margin của input chung /
-/ Mobile và Desktop đều dùng chung style này */
+  position: relative;
+  margin-bottom: 12px;
 }
 
 .input-group input {
-padding-right: 40px;
-margin-bottom: 0 !important;
+  padding-right: 40px;
+  margin-bottom: 0 !important;
 }
 
 .toggle-password {
-position: absolute;
-top: 50%;
-right: 12px;
-transform: translateY(-50%);
-cursor: pointer;
-user-select: none;
-font-size: 1.1em;
-color: var(--text-light);
-transition: color 0.2s;
-z-index: 5;
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.1em;
+  color: var(--text-light);
+  transition: color 0.2s;
+  z-index: 5;
 }
 
 .toggle-password:hover {
-color: var(--primary-color);
+  color: var(--primary-color);
 }
 /* ================= POPUP COMMENT ================= */
 .popup {
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.6);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 2000;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
 }
 
 .popup-content {
-background: var(--card-bg);
-width: 90%;
-max-width: 600px;
-padding: 18px;
-border-radius: 12px;
-max-height: 85vh;
-overflow-y: auto;
-box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  background: var(--card-bg);
+  width: 90%;
+  max-width: 600px;
+  padding: 18px;
+  border-radius: 12px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .close-btn {
-float: right;
-background: none;
-border: none;
-font-size: 18px;
-cursor: pointer;
-color: var(--text-color);
+  float: right;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-color);
 }
 
 .load-more-btn {
-margin-top: 12px;
-background: var(--secondary-color);
-color: white;
-border-radius: 6px;
-padding: 6px;
+  margin-top: 12px;
+  background: var(--secondary-color);
+  color: white;
+  border-radius: 6px;
+  padding: 6px;
 }
 
 .comment-item {
-border-left: 4px solid var(--primary-color);
-padding: 10px;
-margin-bottom: 8px;
-background: var(--input-bg);
-border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+  padding: 10px;
+  margin-bottom: 8px;
 }
 
 /* =========================== */
 /* DELETE BUTTON (POST + COMMENT) */
+/* Cập nhật: Icon vuông, 4px padding, định vị tuyệt đối */
 /* =========================== */
 .delete-comment-btn,
 .delete-post-btn {
   background: transparent;
   border: 1px solid var(--danger-color);
   color: var(--danger-color);
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 4px; /* Padding 4px như yêu cầu */
+  font-size: 1rem; /* Kích thước icon lớn hơn */
   border-radius: 6px;
   cursor: pointer;
   transition: 0.2s ease-in-out;
-  display: inline-flex;
+  display: flex; /* Dùng flex để căn giữa icon */
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  width: 30px; /* Kích thước vuông */
+  height: 30px; /* Kích thước vuông */
+  line-height: 1; 
+  box-sizing: border-box;
+  z-index: 10; /* Đảm bảo nút nằm trên nội dung */
 }
 
 .delete-comment-btn:hover,
@@ -388,38 +580,84 @@ border-radius: 6px;
   color: #fff;
   transform: scale(1.05);
 }
+.delete-comment-btn:active,
+.delete-post-btn:active {
+  transform: scale(0.98);
+}
 
-/* Nút xoá comment đặt góc trên phải của comment */
+
+/* Định vị nút xóa bài đăng */
+.post-card .delete-post-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* Định vị nút xóa comment */
 .comment-item {
-  position: relative;
+  position: relative; /* Đảm bảo đã có */
+  /* Đảm bảo nội dung comment không bị nút che, cách 40px */
+  padding-right: 40px; 
 }
 
 .comment-item .delete-comment-btn {
-  float: right;
-  padding: 4px 6px;
-  border-radius: 5px;
-  font-size: 0.75rem;
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  background: none;
-  cursor: pointer;
-  transition: 0.2s;
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
-.delete-comment-btn:hover {
-  background: var(--danger-color);
+
+/* =================================== */
+/* RESPONSIVE TYPOGRAPHY CHO LANDING PAGE */
+/* =================================== */
+.landing-main {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;    
+  text-align: center;     
+}
+.landing-header h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.landing-title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.landing-description {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--text-light);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.join-btn {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  padding: 0.6em 1.5em; 
+  width: auto;           
+  display: inline-block; 
+  border-radius: 8px;
+  background: var(--primary-color);
   color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.join-btn:hover {
+  background: var(--primary-hover);
   transform: scale(1.05);
 }
-/* Nút xoá bài đặt cạnh tiêu đề hoặc meta */
-.delete-post-btn {
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  background: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.join-btn:active {
+  transform: scale(0.98);
 }
-.delete-post-btn:hover {
-  background: var(--danger-color);
-  color: white;
+.landing-footer {
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  text-align: center;
+  padding: 1rem 0;
 }

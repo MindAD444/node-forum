@@ -8,49 +8,66 @@
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-left">
-      <span id="username-display"></span>
+      <button id="hamburger-btn" class="hamburger-btn">☰</button>
+      <a href="index.html" class="nav-brand">Forum</a>
     </div>
 
     <div class="nav-right">
-      <a href="index.html">Trang chủ</a>
-      <a href="create.html" id="create-link" class="hidden">Đăng bài</a>
-      <a href="admin.html" id="admin-link" class="hidden">Quản trị</a>
-
+      <span id="username-display-nav"></span> 
+      
       <a href="login.html" id="login-link">Đăng nhập</a>
       <a href="register.html" id="register-link">Đăng ký</a>
-
-      <button id="logout-btn" class="hidden">Đăng xuất</button>
-
-      <!-- Nút bật / tắt dark mode -->
-      <button id="theme-toggle" class="theme-toggle">🌓</button>
     </div>
   </nav>
+  <div id="sidebar" class="sidebar">
+    <button id="close-sidebar-btn" class="close-sidebar-btn">&times;</button>
+    
+    <div id="sidebar-auth" class="hidden">
+      <span id="username-display-sidebar"></span>
+      <a href="create.html" id="create-link" class="sidebar-link hidden">Đăng bài</a>
+      <a href="admin.html" id="admin-link" class="sidebar-link hidden">Quản trị</a>
+      <button id="logout-btn" class="sidebar-link sidebar-logout-btn hidden">Đăng xuất</button>
+    </div>
 
-  <!-- MAIN CONTENT -->
+    <div id="sidebar-guest" class="hidden">
+      <p>Bạn cần đăng nhập để sử dụng đầy đủ chức năng</p>
+      
+      <a href="login.html" class="sidebar-link sidebar-primary-btn">Đăng nhập</a>
+      <a href="register.html" class="sidebar-link sidebar-primary-btn">Đăng ký</a>
+    </div>
+
+    <hr>
+    <div class="sidebar-item">
+      <span>Chế độ</span>
+      <button id="theme-toggle" class="theme-toggle">🌓</button>
+    </div>
+  </div>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+
   <main class="container">
     <h1>📜 Danh sách bài viết</h1>
     <div id="posts" class="post-list">Đang tải...</div>
   </main>
-  <!-- POPUP HIỂN THỊ COMMENT -->
-<div id="comment-popup" class="popup hidden">
-  <div class="popup-content">
-    <button id="close-popup" class="close-btn">✖</button>
-    <h2>💬 Bình luận</h2>
-    <div id="comment-list"></div>
-    <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
-
-    <form id="comment-form" class="hidden">
-      <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
-      <button type="submit">Đăng</button>
-    </form>
-
-    <p id="login-hint" class="hidden">Bạn cần đăng nhập để bình luận.</p>
+  
+  <div id="comment-popup" class="popup hidden">
+    <div class="popup-content">
+      <button id="close-popup" class="close-btn">✖</button>
+      <h2>💬 Bình luận</h2>
+      <div id="comment-list"></div>
+      <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
+  
+      <form id="comment-form" class="hidden">
+        <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
+        <button type="submit">Đăng</button>
+      </form>
+  
+      <p id="login-hint" class="hidden">Bạn cần đăng nhập để bình luận.</p>
+    </div>
   </div>
-</div>
-  <!-- SCRIPT -->
+
   <script src="theme.js"></script>
   <script src="app.js"></script>
 
