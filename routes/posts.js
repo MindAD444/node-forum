@@ -6,7 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 import { connectDB } from "../config/db.js";
-await connectDB();
+//await connectDB();
 const router = express.Router();
 
 // Cấu hình Cloudinary Storage
@@ -27,6 +27,28 @@ router.get('/', async (req, res) => {
     .sort('-createdAt');
   res.json(posts);
 });
+
+// ===============================================
+// ROUTE CHI TIẾT BÀI VIẾT: Lấy bài viết theo ID
+// ===============================================
+router.get('/:id', async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate('author', 'username _id') 
+            .lean(); 
+
+        if (!post) {
+            return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        }
+        res.json(post);
+    } catch (err) {
+        // Log lỗi chi tiết nếu có lỗi BSON/Cast (ID không hợp lệ)
+        console.error("Lỗi khi lấy chi tiết bài viết:", err); 
+        res.status(404).json({ error: 'ID bài viết không hợp lệ.' }); // Trả về 404 cho lỗi ID không hợp lệ
+    }
+});
+// ===============================================
+
 
 // Đăng bài mới (Sử dụng Cloudinary)
 router.post('/', auth('user'), upload.array('files', 5), async (req, res) => {
@@ -55,11 +77,9 @@ router.post('/', auth('user'), upload.array('files', 5), async (req, res) => {
 // Xóa bài viết (Chủ bài viết HOẶC Admin)
 router.delete('/:id', auth('user'), async (req, res) => {
     try {
-        // Cần populate author để lấy ID của tác giả
         const post = await Post.findById(req.params.id).populate('author', '_id');
         if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
 
-        // Kiểm tra quyền (So sánh ID tác giả và ID người dùng đăng nhập)
         const isOwner = post.author._id.toString() === req.user._id.toString();
         if (!req.user.isAdmin && !isOwner) {
             return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này.' });
@@ -67,8 +87,6 @@ router.delete('/:id', auth('user'), async (req, res) => {
         
         await Post.findByIdAndDelete(req.params.id);
         await Comment.deleteMany({ post: req.params.id }); 
-        
-        // TODO: (Tối ưu) Logic xóa file trên Cloudinary có thể được thêm vào đây
         
         res.json({ message: 'Đã xóa bài viết và tất cả bình luận liên quan.' });
     } catch (err) {
@@ -78,4 +96,3 @@ router.delete('/:id', auth('user'), async (req, res) => {
 });
 
 export default router;
-

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Đang tải bài viết...</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="home.html" class="nav-brand">Forum</a>
+    </div>
+    <div class="nav-right">
+      <a href="login.html" id="login-link" class="hidden">Đăng nhập</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div id="post-detail" class="post-card">
+        <h1 id="post-title"></h1>
+        <div class="post-meta" style="margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
+            <small style="display: block;" id="post-author"></small>
+            <small style="display: block;" id="post-date"></small>
+        </div>
+        <button id="delete-post-btn" class="delete-post-btn hidden" onclick="deletePost(postId)">❌</button>
+        <div id="post-content"></div>
+        <div id="post-files" style="margin-top: 15px;"></div>
+    </div>
+    
+    <h2 style="margin-top: 30px;">💬 Bình luận</h2>
+    <div id="comment-list"></div>
+    <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
+
+    <form id="comment-form" class="hidden" style="margin-top: 20px;">
+      <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
+      <button type="submit">Đăng bình luận</button>
+    </form>
+
+    <p id="login-hint" style="margin-top: 20px;">Bạn cần đăng nhập để bình luận.</p>
+
+  </main>
+
+  <div id="img-viewer" class="hidden" onclick="this.classList.add('hidden')">
+    <img id="img-viewer-content" src="" alt="Viewed Image">
+  </div>
+  
+  <script src="theme.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+    const commentForm = document.getElementById("comment-form");
+    const loginHint = document.getElementById("login-hint");
+    let commentPage = 1;
+    let commentsPerPage = 10;
+    
+    // Hàm tiện ích format thời gian
+    function formatTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('vi-VN', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+      });
+    }
+
+    // Tải chi tiết bài viết
+    async function loadPostDetail() {
+      if (!postId) {
+        document.getElementById("post-detail").innerHTML = "<h1>Bài viết không tồn tại.</h1><p>Không tìm thấy ID bài viết.</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/posts/${postId}`); 
+        const post = await res.json();
+
+        if (!res.ok) {
+            document.getElementById("post-detail").innerHTML = `<h1>Lỗi</h1><p>${post.error || "Không tìm thấy bài viết."}</p>`;
+            return;
+        }
+
+        document.getElementById("page-title").textContent = post.title + " - Forum";
+        document.getElementById("post-title").textContent = post.title;
+        document.getElementById("post-author").innerHTML = `👤 Tác giả: ${post.author?.username || "Ẩn danh"}`;
+        document.getElementById("post-date").innerHTML = `🕐 Đăng lúc: ${formatTime(post.createdAt)}`;
+        // Thay thế ký tự xuống dòng bằng thẻ <br>
+        document.getElementById("post-content").innerHTML = post.content.replace(/\n/g, '<br>'); 
+        
+        // Hiển thị nút xóa nếu là chủ bài viết hoặc admin
+        const currentUserId = localStorage.getItem("userId");
+        const isAdmin = localStorage.getItem("isAdmin") === 'true';
+        const deleteBtn = document.getElementById("delete-post-btn");
+
+        if (isAdmin || currentUserId === post.author._id) {
+            deleteBtn.classList.remove("hidden");
+        } else {
+            deleteBtn.classList.add("hidden");
+        }
+        
+        // Hiển thị file đính kèm
+        if (post.files && post.files.length > 0) {
+            const fileHtml = post.files.map(url => {
+                const isImage = /\.(jpe?g|png|gif|webp)$/i.test(url);
+                if (isImage) {
+                    return `<img src="${url}" alt="File đính kèm" onclick="showImage('${url}')" style="max-width: 100%; max-height: 280px; object-fit: cover; border-radius: 8px; margin-top: 8px; cursor: pointer;">`;
+                }
+                return `<p><a href="${url}" target="_blank">📎 Tệp đính kèm</a></p>`;
+            }).join("");
+            document.getElementById("post-files").innerHTML = fileHtml;
+        }
+
+        loadComments(true); // Tải bình luận lần đầu
+        
+      } catch (err) {
+        console.error("Lỗi khi tải bài viết:", err);
+        document.getElementById("post-detail").innerHTML = "<h1>Lỗi kết nối</h1><p>Không thể tải chi tiết bài viết.</p>";
+      }
+    }
+
+    // Hiển thị ảnh lớn
+    function showImage(url) {
+        const viewer = document.getElementById('img-viewer');
+        document.getElementById('img-viewer-content').src = url;
+        viewer.classList.remove('hidden');
+    }
+
+    // Xóa bài viết
+    async function deletePost(postId) {
+        if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) return;
+        
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`/posts/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                alert("Bài viết đã được xóa.");
+                window.location.href = 'home.html';
+            } else {
+                const data = await res.json();
+                alert(`Lỗi xóa bài: ${data.error || 'Không rõ.'}`);
+            }
+        } catch (error) {
+            alert("Lỗi kết nối server.");
+        }
+    }
+
+    // ===========================================
+    // LOGIC BÌNH LUẬN
+    // ===========================================
+
+    // Tải bình luận (Giả định có route /comments/:postId?page=... ở backend)
+    async function loadComments(reset = false) {
+      if (reset) {
+          commentPage = 1;
+          document.getElementById('comment-list').innerHTML = '';
+      }
+
+      try {
+          // Giả định route lấy comments là /comments/:postId?page=:page&limit=:limit
+          const res = await fetch(`/comments/${postId}?page=${commentPage}&limit=${commentsPerPage}`);
+          const data = await res.json();
+          const list = document.getElementById('comment-list');
+          
+          if (data.comments && data.comments.length > 0) {
+            const newComments = data.comments.map(c => renderComment(c)).join('');
+            list.insertAdjacentHTML('beforeend', newComments);
+            commentPage++;
+          }
+          
+          // Hiển thị nút "Xem thêm" nếu còn trang (Sử dụng data.totalPages từ API)
+          if (data.totalPages && commentPage <= data.totalPages) {
+            document.getElementById('load-more-comments').classList.remove('hidden');
+          } else {
+            document.getElementById('load-more-comments').classList.add('hidden');
+          }
+          
+          if (commentPage === 1 && data.comments.length === 0) {
+             list.innerHTML = "<p>Chưa có bình luận nào.</p>";
+          }
+          
+      } catch (err) {
+          console.error("Lỗi tải bình luận:", err);
+          document.getElementById('comment-list').innerHTML = "<p>Lỗi khi tải bình luận.</p>";
+      }
+    }
+
+    // Render 1 bình luận
+    function renderComment(comment) {
+        const currentUserId = localStorage.getItem("userId");
+        const isAdmin = localStorage.getItem("isAdmin") === 'true';
+        const isOwner = comment.author?._id === currentUserId;
+        
+        // Nút xóa chỉ hiển thị nếu là chủ comment hoặc admin
+        const deleteBtn = (isAdmin || isOwner) ? 
+            `<button class="delete-comment-btn" onclick="deleteComment('${comment._id}')">❌</button>` : '';
+
+        return `
+            <div class="comment-item" id="comment-${comment._id}">
+                ${deleteBtn}
+                <small style="display: block;"><strong>${comment.author?.username || "Ẩn danh"}</strong></small>
+                <small style="display: block; color: var(--text-light);">${formatTime(comment.createdAt)}</small>
+                <p style="margin-top: 5px;">${comment.content}</p>
+            </div>
+        `;
+    }
+
+    // Tìm đoạn submit comment
+commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const content = document.getElementById('comment-input').value.trim();
+    const token = localStorage.getItem('token');
+    
+    if (!content || !token) return;
+    
+    // ĐỔI TỪ postId → post
+    try {
+        const res = await fetch(`/comments/${postId}`, {   // ← URL đúng
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        }); 
+            if (res.ok) {
+                document.getElementById('comment-input').value = '';
+                // Tải lại bình luận (refresh list)
+                loadComments(true); 
+            } else {
+                alert("Lỗi khi đăng bình luận.");
+            }
+        } catch {
+            alert("Lỗi kết nối server.");
+        }
+    });
+    
+    // Xóa bình luận
+    async function deleteComment(commentId) {
+        if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+        
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                document.getElementById(`comment-${commentId}`).remove();
+            } else {
+                alert("Lỗi khi xóa bình luận.");
+            }
+        } catch (error) {
+            alert("Lỗi kết nối server.");
+        }
+    }
+
+    // Khởi tạo trang
+    document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+            commentForm.classList.remove('hidden');
+            loginHint.classList.add('hidden');
+            document.getElementById('login-link').classList.add('hidden');
+        } else {
+             commentForm.classList.add('hidden');
+             loginHint.classList.remove('hidden');
+             document.getElementById('login-link').classList.remove('hidden');
+        }
+        
+        document.getElementById('load-more-comments').addEventListener('click', () => loadComments(false));
+        
+        loadPostDetail(); 
+    });
+
+  </script>
+</body>
+</html>

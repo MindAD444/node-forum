@@ -8,36 +8,33 @@
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-left">
       <button id="hamburger-btn" class="hamburger-btn">☰</button>
-      <a href="index.html" class="nav-brand">Forum</a>
+      <a href="home.html" class="nav-brand">Forum</a>
     </div>
-
     <div class="nav-right">
-      <span id="username-display-nav"></span> 
-      
+      <span id="username-display-nav"></span>
       <a href="login.html" id="login-link">Đăng nhập</a>
       <a href="register.html" id="register-link">Đăng ký</a>
     </div>
   </nav>
+
+  <!-- SIDEBAR -->
   <div id="sidebar" class="sidebar">
     <button id="close-sidebar-btn" class="close-sidebar-btn">&times;</button>
-    
     <div id="sidebar-auth" class="hidden">
       <span id="username-display-sidebar"></span>
       <a href="create.html" id="create-link" class="sidebar-link hidden">Đăng bài</a>
       <a href="admin.html" id="admin-link" class="sidebar-link hidden">Quản trị</a>
       <button id="logout-btn" class="sidebar-link sidebar-logout-btn hidden">Đăng xuất</button>
     </div>
-
     <div id="sidebar-guest" class="hidden">
       <p>Bạn cần đăng nhập để sử dụng đầy đủ chức năng</p>
-      
       <a href="login.html" class="sidebar-link sidebar-primary-btn">Đăng nhập</a>
       <a href="register.html" class="sidebar-link sidebar-primary-btn">Đăng ký</a>
     </div>
-
     <hr>
     <div class="sidebar-item">
       <span>Chế độ</span>
@@ -46,30 +43,125 @@
   </div>
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-
   <main class="container">
-    <h1>📜 Danh sách bài viết</h1>
-    <div id="posts" class="post-list">Đang tải...</div>
-  </main>
-  
-  <div id="comment-popup" class="popup hidden">
-    <div class="popup-content">
-      <button id="close-popup" class="close-btn">✖</button>
-      <h2>💬 Bình luận</h2>
-      <div id="comment-list"></div>
-      <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
-  
-      <form id="comment-form" class="hidden">
-        <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
-        <button type="submit">Đăng</button>
-      </form>
-  
-      <p id="login-hint" class="hidden">Bạn cần đăng nhập để bình luận.</p>
+    <h1>Forum Thông tin & Thảo Luận</h1>
+
+    <!-- TOGGLE SWITCH SIÊU ĐẸP (HOẠT ĐỘNG 100%) -->
+    <div class="toggle-switch">
+      <button class="toggle-btn active" data-tab="community">Cộng đồng</button>
+      <button class="toggle-btn" data-tab="knowledge">Thông tin</button>
+      <div class="toggle-slider"></div>
     </div>
-  </div>
+
+    <section id="community" class="tab-content active">
+      <div id="posts" class="post-list">Đang tải bài viết...</div>
+    </section>
+
+    <section id="knowledge" class="tab-content">
+      <div id="knowledge-list" class="knowledge-placeholder">Đang tải kiến thức hay...</div>
+    </section>
+  </main>
 
   <script src="theme.js"></script>
   <script src="app.js"></script>
+  <script>
+    const formatTime = d => new Date(d).toLocaleDateString('vi-VN', {
+      day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
 
+    function renderPost(p) {
+      const snippet = p.content.length > 100 ? p.content.substring(0,100)+'...' : p.content;
+      return `
+        <a href="post.html?id=${p._id}" class="post-card-link">
+          <article class="post-card">
+            <h3>${p.title}</h3>
+            <p>${snippet.replace(/\n/g,'<br>')}</p>
+            <div class="post-meta">
+              <small>Tác giả: ${p.author?.username || "Ẩn danh"}</small><br>
+              <small>Đăng lúc: ${formatTime(p.createdAt)}</small>
+            </div>
+          </article>
+        </a>`;
+    }
+
+    async function loadCommunity() {
+      const c = document.getElementById("posts");
+      try {
+        const res = await fetch("/posts");
+        const posts = await res.json();
+        c.innerHTML = posts.length ? posts.map(renderPost).join('') 
+          : "<p class='empty-msg'>Chưa có bài viết nào. Hãy là người đầu tiên!</p>";
+      } catch {
+        c.innerHTML = "<p class='error-msg'>Không thể tải bài viết</p>";
+      }
+    }
+
+    async function loadKnowledge() {
+  const c = document.getElementById("knowledge-list");
+  c.innerHTML = "<p>Đang tải thông tin mới...</p>";
+
+  try {
+    const res = await fetch("/api/knowledge?category=tech");
+    const items = await res.json();
+
+    if (!items || items.length === 0) throw new Error();
+
+    c.innerHTML = `
+      <div class="knowledge-updates">
+        <h3>Thông tin mới nhất</h3>
+        ${items.slice(0, 5).map(item => `
+          <div class="knowledge-item">
+            <h4>
+              <a href="${item.link}" target="_blank" rel="noopener">
+                ${item.title.length > 70 ? item.title.slice(0,67)+'...' : item.title}
+              </a>
+            </h4>
+            <p class="k-desc">
+              ${item.desc && item.desc.length > 120 
+                ? item.desc.slice(0,117)+'...' 
+                : (item.desc || 'Xem chi tiết →')}
+            </p>
+            <small class="k-date">${item.date}</small>
+          </div>
+        `).join('')}
+        <div style="text-align:center;margin-top:20px;">
+          <small style="color:var(--text-light)">
+            Tự động cập nhật • Nguồn: Hacker News
+          </small>
+        </div>
+      </div>`;
+  } catch (err) {
+    c.innerHTML = `
+      <div class="knowledge-card error">
+        <p>Không tải được kiến thức mới</p>
+        <small>Đang thử lại trong giây lát...</small>
+      </div>`;
+  }
+}
+    // Toggle switch + tab
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        btn.dataset.tab === 'community' ? loadCommunity() : loadKnowledge();
+      };
+    });
+
+    // Sidebar
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    document.getElementById('hamburger-btn').onclick = () => {
+      sidebar.classList.add('open'); overlay.classList.add('open');
+    };
+    document.getElementById('close-sidebar-btn').onclick = overlay.onclick = () => {
+      sidebar.classList.remove('open'); overlay.classList.remove('open');
+    };
+
+    // Khởi động
+    document.addEventListener('DOMContentLoaded', loadCommunity);
+  </script>
 </body>
 </html>

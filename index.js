@@ -7,12 +7,14 @@ import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary";
 import authRoutes from "./routes/auth.js";
 import postRoutes from "./routes/posts.js";
+import knowledgeRoutes from "./routes/knowledge.js";
 import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import { connectDB } from "./config/db.js";
 dotenv.config();
-await connectDB();
+connectDB();
 const app = express();
+app.use('/api', knowledgeRoutes); 
 // Middleware chung
 app.use(cors());
 app.use(express.json());
