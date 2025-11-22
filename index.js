@@ -11,10 +11,10 @@ import knowledgeRoutes from "./routes/knowledge.js";
 import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import { connectDB } from "./config/db.js";
+import sitemapRoute from "./routes/sitemap.js";
 dotenv.config();
 connectDB();
 const app = express();
-app.use('/api', knowledgeRoutes); 
 // Middleware chung
 app.use(cors());
 app.use(express.json());
@@ -38,10 +38,12 @@ mongoose
   .catch((err) => console.error("MongoDB error:", err));
 
 // Routes
+app.use("/", sitemapRoute);
 app.use("/auth", authRoutes);
 app.use("/posts", postRoutes);
 app.use("/admin", adminRoutes);
 app.use("/comments", commentRoutes);
+app.use('/api', knowledgeRoutes);
 
 // Static frontend
 app.use(express.static(path.join(__dirname, "public")));

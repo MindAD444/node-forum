@@ -58,7 +58,7 @@
     </section>
 
     <section id="knowledge" class="tab-content">
-      <div id="knowledge-list" class="knowledge-placeholder">Đang tải kiến thức hay...</div>
+      <div id="knowledge-list" class="knowledge-placeholder">Đang tải thông tin...</div>
     </section>
   </main>
 
@@ -96,49 +96,99 @@
         c.innerHTML = "<p class='error-msg'>Không thể tải bài viết</p>";
       }
     }
+let currentPage = 1;
+let isLoading = false;
 
-    async function loadKnowledge() {
-  const c = document.getElementById("knowledge-list");
-  c.innerHTML = "<p>Đang tải thông tin mới...</p>";
+async function loadKnowledge(page = 1, append = false) {
+  const container = document.getElementById("knowledge-list");
+
+  if (!append) {
+    container.innerHTML = `
+      <div class="knowledge-updates">
+        <div class="knowledge-header">
+          <h3>Thông tin mới nhất</h3>
+          <button id="refresh-knowledge" class="refresh-btn" title="Làm mới">Làm mới</button>
+        </div>
+        <div id="knowledge-items"></div>
+        <div id="knowledge-actions"></div>
+      </div>`;
+    currentPage = 1;
+  }
+
+  if (isLoading) return;
+  isLoading = true;
+
+  const itemsContainer = document.getElementById("knowledge-items");
+  const actionsContainer = document.getElementById("knowledge-actions");
+
+  // Xóa nút cũ
+  const oldBtn = document.getElementById('load-more-knowledge');
+  if (oldBtn) oldBtn.remove();
 
   try {
-    const res = await fetch("/api/knowledge?category=tech");
-    const items = await res.json();
+    const res = await fetch(`/api/knowledge?page=${page}`);
+    const data = await res.json();
 
-    if (!items || items.length === 0) throw new Error();
+    data.items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'knowledge-item';
+      div.innerHTML = `
+        <h4>
+          <a href="${item.link}" target="_blank" rel="noopener">
+            ${item.title.length > 70 ? item.title.slice(0,67)+'...' : item.title}
+          </a>
+        </h4>
+        <p class="k-desc">${item.desc}</p>
+        <small class="k-date">
+          ${new Date(item.date).toLocaleDateString('vi-VN', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          })} 
+          <span style="color: var(--primary-color); font-weight: bold;"> • </span>
+          ${item.source || 'Thông tin'}
+        </small>
+      `;
+      itemsContainer.appendChild(div);
+    });
+    // Nút Xem thêm
+    if (data.hasMore) {
+      const btn = document.createElement('button');
+      btn.id = 'load-more-knowledge';
+      btn.className = 'load-more-btn';
+      btn.textContent = 'Xem thêm thông tin';
+      btn.onclick = () => loadKnowledge(currentPage + 1, true);
+      actionsContainer.appendChild(btn);
+      currentPage++;
+    } else if (append && data.items.length > 0) {
+      actionsContainer.innerHTML = `<p style="text-align:center; color:var(--text-light); margin:20px 0;">
+        Đã hết thông tin hay hôm nay
+      </p>`;
+    }
 
-    c.innerHTML = `
-      <div class="knowledge-updates">
-        <h3>Thông tin mới nhất</h3>
-        ${items.slice(0, 5).map(item => `
-          <div class="knowledge-item">
-            <h4>
-              <a href="${item.link}" target="_blank" rel="noopener">
-                ${item.title.length > 70 ? item.title.slice(0,67)+'...' : item.title}
-              </a>
-            </h4>
-            <p class="k-desc">
-              ${item.desc && item.desc.length > 120 
-                ? item.desc.slice(0,117)+'...' 
-                : (item.desc || 'Xem chi tiết →')}
-            </p>
-            <small class="k-date">${item.date}</small>
-          </div>
-        `).join('')}
-        <div style="text-align:center;margin-top:20px;">
-          <small style="color:var(--text-light)">
-            Tự động cập nhật • Nguồn: Hacker News
-          </small>
-        </div>
-      </div>`;
   } catch (err) {
-    c.innerHTML = `
-      <div class="knowledge-card error">
-        <p>Không tải được kiến thức mới</p>
-        <small>Đang thử lại trong giây lát...</small>
-      </div>`;
+    actionsContainer.innerHTML = `<p class="error-msg">Mạng yếu, đang thử lại...</p>`;
+  } finally {
+    isLoading = false;
   }
 }
+
+// Nút làm mới
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('knowledge-list').addEventListener('click', e => {
+    if (e.target.id === 'refresh-knowledge') {
+      e.target.disabled = true;
+      e.target.textContent = 'Đang tải...';
+      loadKnowledge(1, false).finally(() => {
+        e.target.disabled = false;
+        e.target.textContent = 'Làm mới';
+      });
+    }
+  });
+});
+
+// Gọi khi chuyển tab
+// (giữ nguyên phần toggle tab, chỉ thêm dòng gọi lại loadKnowledge khi đổi category nếu cần)
     // Toggle switch + tab
     document.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.onclick = () => {

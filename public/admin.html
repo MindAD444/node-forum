@@ -7,77 +7,158 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <nav class="navbar">
     <div class="nav-left">
-      <a href="home.html" class="nav-brand" >Trang chủ</a>
+      <a href="home.html" class="nav-brand">Forum</a>
+    </div>
+    <div class="nav-right">
+      <a href="home.html">Về trang chủ</a>
     </div>
   </nav>
 
-  <main class="container">
-    <h1>🛠️ Quản lý bài viết chờ duyệt</h1>
-    <div id="pending-posts" class="post-list">Đang tải...</div>
-  </main>
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1>Quản lý bài viết chờ duyệt</h1>
+      <div class="pending-count" id="pending-count">Đang tải...</div>
+    </div>
+
+    <div id="pending-posts">Đang tải bài viết chờ duyệt...</div>
+  </div>
+
   <script src="theme.js"></script>
-  <script src="app.js"></script>
   <script>
-  document.addEventListener("DOMContentLoaded", loadPendingPosts);
-async function loadPendingPosts() {
-  const res = await fetch("/admin/pending", {
-    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-  });
-  const posts = await res.json();
-
-  const container = document.getElementById("pending-posts");
-  container.innerHTML = posts.length
-    ? posts.map(p => `
-      <div class="post-card">
-        <h3>${p.title}</h3>
-        <p>${p.content}</p>
-        <small>👤 ${p.author?.username || "Ẩn danh"}</small><br>
-        
-        <div class="admin-buttons">
-          <button onclick="approvePost('${p._id}')">✅ Duyệt</button>
-          <button onclick="rejectPost('${p._id}')">❌ Xóa</button>
-        </div>
-      </div>
-    `).join("")
-    : "<p>Không có bài nào chờ duyệt.</p>";
-}
-
-async function approvePost(id) {
-  await fetch(`/admin/approve/${id}`, {
-    method: "PUT",
-    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-  });
-  loadPendingPosts();
-}
-
-async function rejectPost(id) {
-  await fetch(`/admin/reject/${id}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-  });
-  loadPendingPosts();
-}
-
-document.addEventListener("DOMContentLoaded", loadPendingPosts);
-  async function deletePost(id, btn) {
     const token = localStorage.getItem("token");
-    if (!confirm("Bạn có chắc muốn xóa bài này?")) return;
-    try {
-      const res = await fetch(`/admin/post/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": "Bearer " + token },
-      });
-      if (res.ok) {
-        btn.closest(".post-card").remove();
-      } else {
-        alert("Không thể xóa bài.");
-      }
-    } catch {
-      alert("Lỗi kết nối server.");
+    if (!token) {
+      alert("Bạn cần đăng nhập với quyền Admin!");
+      window.location.href = "login.html";
     }
-  }
+
+    async function loadPendingPosts() {
+      try {
+        const res = await fetch("/admin/pending", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          if (res.status === 403) return alert("Bạn không có quyền quản trị!");
+          throw new Error("Lỗi tải dữ liệu");
+        }
+
+        const posts = await res.json();
+        const container = document.getElementById("pending-posts");
+        document.getElementById("pending-count").textContent = `${posts.length} bài đang chờ duyệt`;
+
+        if (posts.length === 0) {
+          container.innerHTML = `<p class="no-posts">Tất cả bài viết đã được duyệt!</p>`;
+          return;
+        }
+
+        container.innerHTML = posts.map(p => `
+          <div class="post-card-admin">
+            <h3 class="post-title-admin">${escapeHtml(p.title)}</h3>
+            
+            <div class="post-meta-admin">
+              <strong>Người đăng:</strong> ${p.author?.username || "Ẩn danh"}<br>
+              (ID: ${p.author?._id || "N/A"})<br>
+              <strong>Thời gian:<br></strong> ${new Date(p.createdAt).toLocaleString('vi-VN')}<br>
+              <strong>ID bài viết:<br></strong> <code>${p._id}</code>
+            </div>
+
+            <div class="post-content-admin">${escapeHtml(p.content)}</div>
+            ${p.files && p.files.length > 0 ? `
+  <div class="post-images">
+    ${p.files.map(rawUrl => {
+      // Fix http → https + fallback nếu lỗi
+      const url = rawUrl ? rawUrl.replace(/^http:\/\//i, 'https://') : '';
+      return `
+        <img src="${url || 'https://via.placeholder.com/300x200.png?text=No+Image'}"
+             alt="Hình ảnh bài viết"
+             onclick="window.open('${url}','_blank')"
+             onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200.png?text=Ảnh+lỗi'; this.style.opacity='0.6';"
+             style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 12px; margin: 5px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+      `;
+    }).join('')}
+  </div>
+` : ''}
+            <div class="admin-actions">
+              <button class="btn-approve" onclick="approvePost('${p._id}', this)">
+                Duyệt bài
+              </button>
+              <button class="btn-reject" onclick="rejectPost('${p._id}', this)">
+                Xóa bài
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        document.getElementById("pending-posts").innerHTML = 
+          `<p style="color:red;text-align:center;">Lỗi kết nối server: ${err.message}</p>`;
+      }
+    }
+
+    async function approvePost(id, btn) {
+      if (!confirm("Duyệt bài viết này?")) return;
+      btn.disabled = true;
+      btn.textContent = "Đang duyệt...";
+      try {
+        const res = await fetch(`/admin/approve/${id}`, {
+          method: "PUT",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          btn.closest(".post-card-admin").style.opacity = "0.5";
+          btn.closest(".post-card-admin").innerHTML += "<h2 style='color:green;text-align:center;margin:20px 0;'>ĐÃ DUYỆT</h2>";
+          setTimeout(() => btn.closest(".post-card-admin").remove(), 1500);
+          document.getElementById("pending-count").textContent = 
+            (parseInt(document.getElementById("pending-count").textContent) - 1) + " bài đang chờ duyệt";
+        } else {
+          alert("Lỗi duyệt bài!");
+        }
+      } catch {
+        alert("Lỗi server!");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Duyệt bài";
+      }
+    }
+
+    async function rejectPost(id, btn) {
+      if (!confirm("XÓA bài viết này? Hành động không thể hoàn tác!")) return;
+      btn.disabled = true;
+      btn.textContent = "Đang xóa...";
+      try {
+        const res = await fetch(`/admin/reject/${id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          btn.closest(".post-card-admin").style.opacity = "0.3";
+          btn.closest(".post-card-admin").innerHTML += "<h2 style='color:red;text-align:center;margin:20px 0;'>ĐÃ XÓA</h2>";
+          setTimeout(() => btn.closest(".post-card-admin").remove(), 1500);
+          document.getElementById("pending-count").textContent = 
+            (parseInt(document.getElementById("pending-count").textContent) - 1) + " bài đang chờ duyệt";
+        } else {
+          alert("Lỗi xóa bài!");
+        }
+      } catch {
+        alert("Lỗi server!");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Xóa bài";
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    // Tự động reload mỗi 30 giây
+    setInterval(loadPendingPosts, 30000);
+    loadPendingPosts();
   </script>
 </body>
 </html>

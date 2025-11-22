@@ -137,11 +137,13 @@ body {
 
 /* Dark Mode Toggle */
 .theme-toggle {
+  width: auto;
+  padding: 0.6em 1.5em;
   background: none;
+  border-radius: 8px;
   border: none;
   font-size: 1.3rem;
   cursor: pointer;
-  padding: 6px;
 }
 
 /* =================================== /
@@ -920,4 +922,119 @@ button:active {
 .k-date {
   color: #10b981;
   font-size: 0.85rem;
+}
+/* ====================== ADMIN PAGE STYLES ====================== */
+.admin-container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+.admin-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid var(--primary-color);
+}
+.pending-count {
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 10px;
+}
+.post-card-admin {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-left: 6px solid #ff9800;
+  transition: all 0.3s;
+}
+.post-card-admin:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+.post-title-admin { font-size: 1.5rem; margin: 0 0 12px; color: var(--primary-color); }
+.post-meta-admin {
+  background: rgba(0,0,0,0.05);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 15px 0;
+  font-size: 0.95rem;
+}
+.post-content-admin {
+  line-height: 1.7;
+  margin: 15px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.post-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 15px 0;
+}
+.post-images img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.post-images img:hover { transform: scale(1.05); }
+.admin-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.btn-approve {
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  flex: 1;
+}
+.btn-reject {
+  background: #f44336;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  flex: 1;
+}
+.btn-approve:hover { background: #45a049; }
+.btn-reject:hover { background: #da190b; }
+.no-posts {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 1.2rem;
+  margin: 50px 0;
+.refresh-btn {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  padding: 0.6em 1.5em; 
+  width: auto;           
+  display: inline-block; 
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.refresh-btn:hover {
+  background: var(--primary-hover);
+  transform: scale(1.05);
+}
+.refresh-btn:active {
+  transform: scale(0.98);
+}
+}
+@media (max-width: 600px) {
+  .admin-actions { flex-direction: column; }
+  .post-images img { max-width: 100%; }
 }

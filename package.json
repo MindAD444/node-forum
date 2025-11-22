@@ -27,6 +27,7 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.9",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "sitemap": "^9.0.0"
   }
 }

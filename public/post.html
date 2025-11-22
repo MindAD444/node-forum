@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <meta id="meta-title" name="title" content="">
+  <meta id="meta-description" name="description" content="">
+  <meta id="meta-og-title" property="og:title" content="">
+  <meta id="meta-og-description" property="og:description" content="">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="page-title">Đang tải bài viết...</title>
@@ -49,6 +53,10 @@
   <script src="theme.js"></script>
   <script src="app.js"></script>
   <script>
+document.getElementById("meta-title").content = post.title;
+document.getElementById("meta-description").content = post.content.slice(0, 150);
+document.getElementById("meta-og-title").content = post.title;
+document.getElementById("meta-og-description").content = post.content.slice(0, 150);
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     const commentForm = document.getElementById("comment-form");
