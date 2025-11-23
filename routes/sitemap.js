@@ -10,19 +10,20 @@ router.get("/sitemap.xml", async (req, res) => {
       hostname: "https://forum.lingangu.space"
     });
 
-    // ==== Static pages ====
-    smStream.write({ url: "/", priority: 1 });
-    smStream.write({ url: "/create.html" });
-    smStream.write({ url: "/login.html" });
-    smStream.write({ url: "/register.html" });
+    // Static pages
+    smStream.write({ url: "/", priority: 1.0 });
+    smStream.write({ url: "/home.html", priority: 1.0 });
+    smStream.write({ url: "/create.html", priority: 0.8 });
+    smStream.write({ url: "/login.html", priority: 0.5 });
+    smStream.write({ url: "/register.html", priority: 0.5 });
 
-    // ==== Dynamic posts (only approved posts) ====
+    // Dynamic posts
     const posts = await Post.find({ approved: true });
 
     posts.forEach((post) => {
       smStream.write({
         url: `/post.html?id=${post._id}`,
-        lastmod: post.createdAt,
+        lastmod: post.updatedAt || post.createdAt,
         changefreq: "weekly",
         priority: 0.8
       });
