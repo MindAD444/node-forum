@@ -1,15 +1,13 @@
-/* =================================== /
-/ RESET + BIẾN TOÀN CỤC /
-/ =================================== */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* =================================== 
+   1. RESET & VARIABLES 
+   =================================== */
+*, *::before, *::after { box-sizing: border-box; }
 
 :root {
   --primary-color: #007bff;
   --primary-hover: #0056b3;
   --danger-color: #dc2626;
-  --danger-hover: #a00000; /* Màu đỏ đậm hơn */
+  --danger-hover: #a00000;
   --secondary-color: #6c757d;
   --text-color: #333;
   --text-light: #6b7280;
@@ -20,13 +18,12 @@
   --input-bg: #f9f9f9;
 }
 
-/* DARK MODE */
 body.dark {
   --bg-color: #121212;
   --text-color: #e0e0e0;
   --primary-color: #4da3ff;
   --primary-hover: #5dbbff;
-  --danger-color: #ef4444; /* Đỏ sáng hơn trong dark mode */
+  --danger-color: #ef4444;
   --danger-hover: #cc0000;
   --border-color: #333;
   --shadow-light: rgba(255, 255, 255, 0.1);
@@ -34,9 +31,6 @@ body.dark {
   --input-bg: #1e1e1e;
 }
 
-/* =================================== /
-/ BODY /
-/ =================================== */
 body {
   font-family: 'Segoe UI', Tahoma, sans-serif;
   background-color: var(--bg-color);
@@ -44,996 +38,233 @@ body {
   margin: 0;
   padding-top: 65px;
   transition: background 0.3s ease, color 0.3s ease;
-  font-size: 16px; 
+  font-size: 16px;
   line-height: 1.6;
 }
 
 .hidden { display: none !important; }
+.container { max-width: 900px; margin: auto; padding: 20px; }
 
-/* =================================== /
-/ NAVBAR /
-/ =================================== */
+/* =================================== 
+   2. NAVBAR 
+   =================================== */
 .navbar {
-  transition: transform 0.3s ease-in-out;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  position: fixed; top: 0; left: 0; width: 100%;
   background: var(--card-bg);
   box-shadow: 0 2px 6px var(--shadow-light);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
   padding: 0.7rem 1.2rem;
   z-index: 1000;
-  text-align: left; /* FIX căn lề trái */
+  transition: transform 0.3s ease-in-out;
 }
+.navbar-hidden { transform: translateY(-100%); }
+.nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
 
-.navbar-hidden {
-  transform: translateY(-100%);
-}
+.nav-brand { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); text-decoration: none; }
+.hamburger-btn { font-size: 1.8rem; background: none; border: none; color: var(--text-color); cursor: pointer; padding: 0 10px; transition: 0.2s; }
 
-.nav-left {
-  display: flex; /* FIX mobile stacking */
-  align-items: center; 
-}
-
-.nav-brand {
-  font-weight: 700;
-  font-size: 1.3rem;
-  color: var(--primary-color);
-  text-decoration: none;
-  margin-left: 10px;
-}
-
-.hamburger-btn {
-  font-size: 1.8rem;
-  background: none;
-  border: none;
-  color: var(--text-color);
-  cursor: pointer;
-  padding: 0 10px;
-  border-radius: 8px;
-  transition: background 0.2s, transform 0.05s;
-}
-.hamburger-btn:hover {
-  background: var(--input-bg);
-}
-.hamburger-btn:active {
-  transform: scale(0.95);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Nút Đăng nhập/Đăng ký ngoài navbar */
 .nav-right a {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: 0.2s;
-  border: 1px solid transparent;
-  background: var(--primary-color);
-  color: white;
-  transition: background 0.2s, transform 0.05s;
+  padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; text-decoration: none;
+  background: var(--primary-color); color: white; transition: 0.2s;
 }
-.nav-right a:hover {
-  background: var(--primary-hover);
-}
-.nav-right a:active {
-  background: var(--primary-hover);
-  transform: scale(0.98);
-}
+.nav-right a:hover { background: var(--primary-hover); }
+.nav-right a:active { transform: scale(0.98); }
 
-#username-display-nav {
-  font-weight: 600;
-  color: var(--text-light);
-  margin-right: 10px;
-}
+#username-display-nav { font-weight: 600; color: var(--text-light); margin-right: 10px; }
+.theme-toggle { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 0.6em; }
 
-/* Dark Mode Toggle */
-.theme-toggle {
-  width: auto;
-  padding: 0.6em 1.5em;
-  background: none;
-  border-radius: 8px;
-  border: none;
-  font-size: 1.3rem;
-  cursor: pointer;
-}
-
-/* =================================== /
-/ SIDEBAR MỚI /
-/ =================================== */
+/* =================================== 
+   3. SIDEBAR 
+   =================================== */
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: -300px; 
-  width: 300px;
-  max-width: 80%; 
-  height: 100%;
+  position: fixed; top: 0; left: -300px; width: 300px; max-width: 80%; height: 100%;
   background: var(--card-bg);
   box-shadow: 4px 0 12px var(--shadow-light);
-  z-index: 1002;
-  transition: left 0.3s ease-in-out;
-  padding: 20px;
-  padding-top: 60px; 
-  display: flex;
-  flex-direction: column;
+  z-index: 1002; transition: left 0.3s ease-in-out;
+  padding: 60px 20px 20px; display: flex; flex-direction: column;
 }
+.sidebar.open { left: 0; }
 
-.sidebar.open {
-  left: 0; 
-}
-
-/* Lớp phủ mờ */
 .sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1001;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s;
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 1001;
+  opacity: 0; visibility: hidden; transition: 0.3s;
 }
-
-.sidebar-overlay.open {
-  opacity: 1;
-  visibility: visible;
-}
+.sidebar-overlay.open { opacity: 1; visibility: visible; }
 
 .close-sidebar-btn {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 2.2rem;
-  background: none;
-  border: none;
-  color: var(--text-color);
-  cursor: pointer;
-  padding: 0 10px;
-  line-height: 1;
-  width: auto;
-  transition: color 0.2s, transform 0.05s;
+  position: absolute; top: 10px; right: 15px; font-size: 2.2rem;
+  background: none; border: none; color: var(--text-color); cursor: pointer;
 }
-.close-sidebar-btn:hover {
-  color: var(--danger-color);
-}
-.close-sidebar-btn:active {
-  transform: scale(0.95);
-}
+.close-sidebar-btn:hover { color: var(--danger-color); }
 
-#username-display-sidebar {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  display: block;
-  margin-bottom: 20px;
-  word-break: break-all;
-}
+#username-display-sidebar { font-size: 1.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 20px; word-break: break-all; }
 
-/* CÁC LIÊN KẾT CHUNG TRONG SIDEBAR (Đăng bài, Quản trị, Trang chủ) */
 .sidebar-link {
-  display: block;
-  width: 100%;
-  padding: 12px 10px;
-  text-decoration: none;
-  color: var(--text-color);
-  border-radius: 8px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  background: none;
-  border: none;
-  text-align: left;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, transform 0.05s, border-color 0.2s;
+  display: block; width: 100%; padding: 12px 10px; margin-bottom: 8px;
+  text-decoration: none; color: var(--text-color); border-radius: 8px;
+  font-weight: 500; background: none; border: none; text-align: left; font-size: 1rem; cursor: pointer;
+  transition: 0.2s;
 }
+.sidebar-link:hover { background: var(--input-bg); }
+.sidebar-link:active { background: var(--primary-color); color: white; transform: scale(0.98); }
 
-/* Hover/Active cho các link thường (Đăng bài, Quản trị) */
-.sidebar-link:hover {
-  background: var(--input-bg);
-}
-.sidebar-link:active {
-  background: var(--primary-color);
-  color: white; /* Đổi màu chữ khi nhấn */
-  transform: scale(0.98);
-}
+.sidebar-action-link { background: var(--primary-color); color: white !important; text-align: center; margin-top: 10px; }
+.sidebar-action-link:hover { background: var(--primary-hover); }
 
-
-/* CÁC NÚT HÀNH ĐỘNG CHÍNH (Đăng nhập/Đăng ký trong sidebar) */
-.sidebar-action-link {
-  background: var(--primary-color);
-  color: white !important; 
-  font-weight: 600;
-  text-align: center; 
-  margin-top: 10px;
-}
-
-.sidebar-action-link:hover {
-  background: var(--primary-hover);
-}
-.sidebar-action-link:active {
-  background: var(--primary-color); /* Giữ nguyên màu khi nhấn */
-  transform: scale(0.98);
-}
-
-
-/* HIỆU ỨNG RIÊNG CHO NÚT ĐĂNG XUẤT (TRONG SUỐT CÓ VIỀN ĐỎ) */
 .sidebar-logout-btn {
-  background: transparent !important;
-  color: var(--danger-color) !important;
-  border: 2px solid var(--danger-color);
-  font-weight: 600;
-  text-align: center;
-  margin-top: 10px;
+  background: transparent !important; color: var(--danger-color) !important;
+  border: 2px solid var(--danger-color); text-align: center; margin-top: 10px; font-weight: 600;
 }
+.sidebar-logout-btn:hover { background: var(--input-bg) !important; }
+.sidebar-logout-btn:active { background: var(--danger-color) !important; color: white !important; }
 
-.sidebar-logout-btn:hover {
-  background: var(--input-bg) !important;
-  color: var(--danger-color) !important;
-}
-
-.sidebar-logout-btn:active {
-  /* Hiệu ứng yêu cầu: cả nút chuyển thành màu đỏ khi nhấn */
-  background: var(--danger-color) !important;
-  color: white !important;
-  transform: scale(0.98);
-}
-
-
-/* =================================== /
-/ POSTS /
-/ =================================== */
-.container {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-}
-
-.post-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-}
-
-.post-card {
-  background: var(--card-bg);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px var(--shadow-light);
-  border-left: 4px solid var(--primary-color);
-  transition: 0.2s;
-  position: relative; /* THÊM: Cho phép định vị nút xóa */
-  padding-right: 60px; /* THÊM: Đảm bảo nội dung không bị nút xóa post che */
-}
-.post-card:hover {
-  transform: translateY(-3px);
-}
-
-/* =================================== /
-/ ẢNH TRONG BÀI & COMMENT /
-/ =================================== */
-.post-card img,
-.comment-item img {
-  max-width: 100%;
-  max-height: 280px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-top: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.post-card img:hover,
-.comment-item img:hover {
-  transform: scale(1.03);
-}
-
-/* IMAGE VIEWER */
-#img-viewer {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-}
-#img-viewer img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 10px;
-}
-
-/* =================================== /
-/ COMMENT SECTION /
-/ =================================== */
-.comment-item {
-  background: var(--input-bg);
-  padding: 12px;
-  border-radius: 8px;
-  border-left: 3px solid var(--primary-color);
-  margin-top: 10px;
-  position: relative; /* Đã có */
-  padding-right: 40px; /* THÊM: Đảm bảo nội dung comment không bị nút xóa che */
-}
-
-.toggle-comments-btn {
-  border: 1px solid var(--primary-color);
-  background: none;
-  color: var(--primary-color);
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.toggle-comments-btn:hover {
-  background: var(--primary-color);
-  color: white;
-}
-.toggle-comments-btn:active {
-  transform: scale(0.98);
-}
-
-
-.comment-form textarea,
-.reply-box textarea {
-  width: 100%;
-  background: var(--input-bg);
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  padding: 8px;
-  margin-top: 6px;
-}
-
-.comment-form button,
-.reply-box button {
-  background: var(--primary-color);
-  border-radius: 6px;
-  padding: 6px 12px;
-  margin-top: 6px;
-  cursor: pointer;
-  color: white;
-}
-.comment-form button:active,
-.reply-box button:active {
-  transform: scale(0.98);
-}
-
-/* Nút trả lời */
-.reply-btn {
-  font-size: 0.85rem;
-  color: var(--primary-color);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-/* =================================== /
-/ RESPONSIVE & FORM STYLES /
-/ =================================== */
-@media (max-width: 768px) {
-  /* Ẩn các nút đăng nhập/ký trên mobile để ưu tiên sidebar */
-  #login-link, #register-link {
-    display: none;
-  }
-}
-
+/* =================================== 
+   4. FORMS, INPUTS & COMMON BUTTONS 
+   =================================== */
 .form-container, .create-post-container {
-  background: var(--card-bg);
-  color: var(--text-color);
-  padding: 25px 35px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px var(--shadow-light);
-  width: 90%;
-  max-width: 500px;
-  margin: 80px auto 20px;
-  text-align: center;
-  transition: background 0.3s, color 0.3s;
+  background: var(--card-bg); padding: 25px 35px; border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light); width: 90%; max-width: 500px;
+  margin: 80px auto 20px; text-align: center;
 }
-
-.form-container h1, .create-post-container h1 {
-  color: var(--primary-color);
-  font-size: 1.8rem;
-  margin-bottom: 20px;
-}
+.form-container h1, .create-post-container h1 { color: var(--primary-color); font-size: 1.8rem; margin-bottom: 20px; }
 
 input, textarea {
-  background-color: var(--input-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 12px;
-  width: 100%;
-  margin-bottom: 12px;
-  font-size: 15px;
+  background-color: var(--input-bg); color: var(--text-color);
+  border: 1px solid var(--border-color); border-radius: 6px;
+  padding: 12px; width: 100%; margin-bottom: 12px; font-size: 15px;
 }
-input:focus, textarea:focus {
-  border-color: var(--primary-color);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-}
+input:focus, textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2); }
 
-button {
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  width: 100%;
-  transition: background 0.2s, transform 0.2s;
+button, .join-btn, .refresh-btn {
+  background: var(--primary-color); color: #fff; border: none;
+  padding: 12px; border-radius: 6px; font-size: 16px; cursor: pointer;
+  transition: 0.2s; display: inline-block;
 }
-button:hover {
-  background: var(--primary-hover);
-  transform: scale(1.02);
-}
-button:active {
-  transform: scale(0.98);
-}
+button:hover, .join-btn:hover, .refresh-btn:hover { background: var(--primary-hover); transform: scale(1.02); }
+button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 
-/*======================= /
-/ PASSWORD TOGGLE STYLES /
-/ ====================== */
-
-.input-group {
-  position: relative;
-  margin-bottom: 12px;
-}
-
-.input-group input {
-  padding-right: 40px;
-  margin-bottom: 0 !important;
-}
-
+/* Password Toggle */
+.input-group { position: relative; margin-bottom: 12px; }
+.input-group input { padding-right: 40px; margin-bottom: 0 !important; }
 .toggle-password {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  cursor: pointer;
-  user-select: none;
-  font-size: 1.1em;
-  color: var(--text-light);
-  transition: color 0.2s;
-  z-index: 5;
+  position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+  cursor: pointer; color: var(--text-light); font-size: 1.1em;
 }
 
-.toggle-password:hover {
-  color: var(--primary-color);
-}
-/* ================= POPUP COMMENT ================= */
-.popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+/* =================================== 
+   5. CARDS (POSTS, ADMIN, KNOWLEDGE) 
+   =================================== */
+.post-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+
+/* Base Card Style */
+.post-card, .post-card-admin, .knowledge-card, .knowledge-item {
+  background: var(--card-bg); padding: 20px; border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow-light); transition: 0.2s; position: relative;
 }
 
-.popup-content {
-  background: var(--card-bg);
-  width: 90%;
-  max-width: 600px;
-  padding: 18px;
-  border-radius: 12px;
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
+/* Specific Card Styles */
+.post-card { border-left: 4px solid var(--primary-color); padding-right: 60px; }
+.post-card:hover, .post-card-admin:hover, .knowledge-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow-light); }
+.post-card-link { display: block; text-decoration: none; color: inherit; transition: transform 0.2s; }
 
-.close-btn {
-  float: right;
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--text-color);
-}
+.post-card-admin { border-left: 6px solid #ff9800; margin-bottom: 20px; }
+.knowledge-card { border-left: 6px solid #10b981; max-width: 600px; margin: 20px auto; text-align: center; padding: 24px; }
+.knowledge-item { border-left: 5px solid #10b981; padding: 16px; margin-bottom: 16px; word-wrap: break-word; }
 
-.load-more-btn {
-  margin-top: 12px;
-  background: var(--secondary-color);
-  color: white;
-  border-radius: 6px;
-  padding: 6px;
+.post-card img, .comment-item img, .post-images img {
+  max-width: 100%; border-radius: 8px; margin-top: 8px; cursor: pointer; transition: 0.2s; object-fit: cover;
 }
+.post-card img:hover { transform: scale(1.03); }
 
+/* =================================== 
+   6. COMMENTS & DELETE BUTTONS 
+   =================================== */
 .comment-item {
-  border-left: 4px solid var(--primary-color);
-  padding: 10px;
-  margin-bottom: 8px;
+  background: var(--input-bg); padding: 12px; border-radius: 8px;
+  border-left: 3px solid var(--primary-color); margin-top: 10px;
+  position: relative; padding-right: 40px;
 }
 
-/* =========================== */
-/* DELETE BUTTON (POST + COMMENT) */
-/* Cập nhật: Icon vuông, 4px padding, định vị tuyệt đối */
-/* =========================== */
-.delete-comment-btn,
-.delete-post-btn {
-  background: transparent;
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-  padding: 4px; /* Padding 4px như yêu cầu */
-  font-size: 1rem; /* Kích thước icon lớn hơn */
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
-  display: flex; /* Dùng flex để căn giữa icon */
-  align-items: center;
-  justify-content: center;
-  width: 30px; /* Kích thước vuông */
-  height: 30px; /* Kích thước vuông */
-  line-height: 1; 
-  box-sizing: border-box;
-  z-index: 10; /* Đảm bảo nút nằm trên nội dung */
+.delete-comment-btn, .delete-post-btn {
+  background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color);
+  padding: 4px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; z-index: 10; position: absolute;
 }
+.delete-comment-btn:hover, .delete-post-btn:hover { background: var(--danger-color); color: #fff; transform: scale(1.05); }
+.post-card .delete-post-btn { top: 10px; right: 10px; }
+.comment-item .delete-comment-btn { top: 6px; right: 6px; }
 
-.delete-comment-btn:hover,
-.delete-post-btn:hover {
-  background: var(--danger-color);
-  color: #fff;
-  transform: scale(1.05);
-}
-.delete-comment-btn:active,
-.delete-post-btn:active {
-  transform: scale(0.98);
-}
+.load-more-btn { background: var(--secondary-color); margin-top: 12px; width: auto; }
 
-
-/* Định vị nút xóa bài đăng */
-.post-card .delete-post-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-/* Định vị nút xóa comment */
-.comment-item {
-  position: relative; /* Đảm bảo đã có */
-  /* Đảm bảo nội dung comment không bị nút che, cách 40px */
-  padding-right: 40px; 
-}
-
-.comment-item .delete-comment-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-}
-
-/* =================================== */
-/* RESPONSIVE TYPOGRAPHY CHO LANDING PAGE */
-/* =================================== */
-.landing-main {
-  display: flex;
-  flex-direction: column; 
-  align-items: center;    
-  text-align: center;     
-}
-.landing-header h1 {
-  font-size: clamp(2rem, 5vw, 3rem);
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-.landing-title {
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.landing-description {
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  text-align: center;
-  margin-bottom: 2rem;
-  color: var(--text-light);
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.join-btn {
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-  padding: 0.6em 1.5em; 
-  width: auto;           
-  display: inline-block; 
-  border-radius: 8px;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.join-btn:hover {
-  background: var(--primary-hover);
-  transform: scale(1.05);
-}
-.join-btn:active {
-  transform: scale(0.98);
-}
-.landing-footer {
-  font-size: clamp(0.8rem, 1.5vw, 1rem);
-  text-align: center;
-  padding: 1rem 0;
-}
-/* =================================== /
-/* STYLE CHO LINK BÀI VIẾT TRÊN HOME.HTML */
-/* =================================== */
-.post-card-link {
-    display: block; /* Quan trọng: làm cho thẻ link chiếm toàn bộ post-card */
-    text-decoration: none;
-    color: inherit;
-    /* Đảm bảo hiệu ứng hover/active hoạt động trên toàn bộ card */
-    transition: transform 0.2s;
-}
-
-/* Kế thừa hiệu ứng hover của .post-card */
-.post-card-link:hover .post-card {
-    transform: translateY(-3px);
-}
-/* ====================== TAB SYSTEM ====================== */
-.tab-buttons {
-  display: flex;
-  gap: 12px;
-  margin: 20px 0 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.tab-btn {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 8px;
-  background: var(--input-bg);
-  color: var(--text-color);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.3s;
-}
-.tab-btn:hover:not(.active) { background: var(--border-color); }
-.tab-btn.active {
-  background: var(--primary-color);
-  color: white;
-}
-
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* ====================== KIẾN THỨC CARD ====================== */
-.knowledge-placeholder { text-align: center; padding: 40px 20px; color: var(--text-light); }
-.knowledge-card {
-  background: var(--card-bg);
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px var(--shadow-light);
-  border-left: 5px solid #10b981;
-  text-align: center;
-  max-width: 600px;
-  margin: 20px auto;
-}
-.knowledge-card blockquote {
-  font-size: 1.25rem;
-  font-style: italic;
-  margin: 20px 0;
-  color: var(--text-color);
-}
-.knowledge-card .knowledge-author {
-  margin: 16px 0;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-.knowledge-tag {
-  display: inline-block;
-  background: #10b981;
-  color: white;
-  padding: 6px 14px;
-  border-radius: 30px;
-  font-size: 0.85rem;
-}
-.knowledge-card.error { border-left-color: var(--danger-color); }
-
-/* Thông báo trống / lỗi */
-.empty-msg, .error-msg {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-light);
-  font-size: 1.1rem;
-}
-.error-msg { color: var(--danger-color); }
-/* ====================== TOGGLE SWITCH SIÊU ĐẸP ====================== */
+/* =================================== 
+   7. TOGGLE SWITCH (Tabs) - ĐÃ SỬA GỘP 
+   =================================== */
 .toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 320px;
-  height: 50px;
-  background: var(--input-bg);
-  border-radius: 50px;
-  margin: 20px auto;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
-  overflow: hidden;
+  position: relative; display: flex; width: 320px; height: 50px;
+  margin: 25px auto; background: var(--input-bg); border-radius: 50px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2); overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.1);
 }
 
 .toggle-btn {
-  position: relative;
-  z-index: 2;
-  width: 50%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  color: var(--text-light);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: color 0.4s;
+  flex: 1; border: none; background: transparent; color: var(--text-light);
+  font-weight: 600; font-size: 1rem; z-index: 2; cursor: pointer; transition: color 0.4s;
+  padding: 0; margin: 0; width: 50%; /* Reset button styles */
 }
-
-.toggle-btn.active {
-  color: white;
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 8px);
-  height: calc(100% - 8px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50px;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.toggle-switch .toggle-btn[data-tab="knowledge"].active ~ .toggle-slider {
-  transform: translateX(100%);
-}
-
-/* Khi tab Kiến thức active → slider chạy sang phải */
-/* TOGGLE SWITCH HOÀN HẢO - ĐÃ SỬA LỖI TRƯỢT */
-.toggle-switch {
-  position: relative;
-  display: flex;
-  width: 320px;
-  height: 52px;
-  margin: 25px auto;
-  background: var(--input-bg);
-  border-radius: 50px;
-  overflow: hidden;
-  box-shadow: inset 0 3px 8px rgba(0,0,0,.2);
-  border: 2px solid rgba(255,255,255,.1);
-}
-
-.toggle-btn {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: var(--text-light);
-  font-weight: 600;
-  font-size: 1rem;
-  z-index: 2;
-  cursor: pointer;
-  transition: color .4s ease;
-}
-
+.toggle-btn:hover { transform: none; background: transparent; } /* Remove generic button hover */
 .toggle-btn.active { color: white; }
 
 .toggle-slider {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 8px);
-  height: calc(100% - 8px);
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 50px;
-  transition: transform .4s cubic-bezier(.68,-.55,.27,1.55);
-  box-shadow: 0 4px 15px rgba(102,126,234,.5);
-  pointer-events: none;
-  z-index: 1;
+  position: absolute; top: 4px; left: 4px; width: calc(50% - 8px); height: calc(100% - 8px);
+  background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50px;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); pointer-events: none; z-index: 1;
 }
 
-.toggle-btn[data-tab="knowledge"].active ~ .toggle-slider {
-  transform: translateX(100%);
-}
+/* Khi nút thứ 2 (data-tab="knowledge") active thì trượt slider */
+.toggle-btn[data-tab="knowledge"].active ~ .toggle-slider { transform: translateX(100%); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
-/* CARD KIẾN THỨC */
-.knowledge-card {
-  background: var(--card-bg);
-  padding: 28px;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px var(--shadow-light);
-  border-left: 6px solid #10b981;
-  text-align: center;
-  max-width: 600px;
-  margin: 20px auto;
-}
-.knowledge-card blockquote {
-  font-size: 1.3rem;
-  font-style: italic;
-  margin: 20px 0;
-  line-height: 1.6;
-}
-.knowledge-author { font-weight: 600; color: var(--primary-color); margin: 10px 0; }
-.knowledge-tag { background:#10b981; color:#fff; padding:8px 16px; border-radius:30px; font-size:.9rem; }
-.knowledge-card.error { border-left-color:#ef4444; }
+/* =================================== 
+   8. PAGE SPECIFIC (Landing, Admin, Popups) 
+   =================================== */
+/* Landing Page */
+.landing-main { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.landing-header h1 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 0.5rem; }
+.landing-title { font-size: clamp(1.5rem, 4vw, 2.5rem); margin-bottom: 1rem; }
+.landing-description { max-width: 600px; color: var(--text-light); margin-bottom: 2rem; font-size: clamp(1rem, 2.5vw, 1.25rem); }
+.join-btn, .refresh-btn { width: auto; padding: 0.6em 1.5em; }
 
-/* Loại bỏ mọi hiệu ứng chung của button cho toggle */
-.toggle-switch .toggle-btn,
-.toggle-switch .toggle-btn:hover,
-.toggle-switch .toggle-btn:active {
-    transform: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-/* KIẾN THỨC MỚI – ĐẸP NHƯ APP THẬT */
-.knowledge-updates {
-  max-width: 660px;
-  margin: 0 auto;
-  padding: 0 10px;
-}
-.knowledge-updates h3 {
-  text-align: center;
-  color: var(--primary-color);
-  margin: 20px 0 25px;
-  font-size: 1.4rem;
-}
-
-.knowledge-item {
-  background: var(--card-bg);
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 16px;
-  box-shadow: 0 3px 12px var(--shadow-light);
-  border-left: 5px solid #10b981;
-  transition: all 0.2s;
-  word-wrap: break-word;
-}
-.knowledge-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px var(--shadow-light);
-}
-
-.knowledge-item h4 {
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
-  line-height: 1.4;
-}
-.knowledge-item h4 a {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 600;
-}
-.knowledge-item h4 a:hover {
-  text-decoration: underline;
-}
-
-.k-desc {
-  margin: 8px 0;
-  color: var(--text-light);
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.k-date {
-  color: #10b981;
-  font-size: 0.85rem;
-}
-/* ====================== ADMIN PAGE STYLES ====================== */
+/* Admin */
 .admin-container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-.admin-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 3px solid var(--primary-color);
+.admin-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid var(--primary-color); padding-bottom: 15px; }
+.pending-count { background: var(--primary-color); color: white; padding: 8px 16px; border-radius: 50px; font-weight: bold; display: inline-block; }
+.admin-actions { display: flex; gap: 12px; margin-top: 20px; }
+.btn-approve { background: #4caf50; flex: 1; border-radius: 50px; padding: 12px; color: white; border: none; cursor: pointer; font-weight: bold;}
+.btn-reject { background: #f44336; flex: 1; border-radius: 50px; padding: 12px; color: white; border: none; cursor: pointer; font-weight: bold;}
+.no-posts { text-align: center; color: var(--text-light); font-size: 1.2rem; margin: 50px 0; }
+
+/* Popup & Image Viewer */
+.popup, #img-viewer {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; justify-content: center; align-items: center; z-index: 3000;
 }
-.pending-count {
-  background: var(--primary-color);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 50px;
-  font-weight: bold;
-  display: inline-block;
-  margin-top: 10px;
-}
-.post-card-admin {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  border-left: 6px solid #ff9800;
-  transition: all 0.3s;
-}
-.post-card-admin:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-.post-title-admin { font-size: 1.5rem; margin: 0 0 12px; color: var(--primary-color); }
-.post-meta-admin {
-  background: rgba(0,0,0,0.05);
-  padding: 12px;
-  border-radius: 12px;
-  margin: 15px 0;
-  font-size: 0.95rem;
-}
-.post-content-admin {
-  line-height: 1.7;
-  margin: 15px 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-.post-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 15px 0;
-}
-.post-images img {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.post-images img:hover { transform: scale(1.05); }
-.admin-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  flex-wrap: wrap;
-}
-.btn-approve {
-  background: #4caf50;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  flex: 1;
-}
-.btn-reject {
-  background: #f44336;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  flex: 1;
-}
-.btn-approve:hover { background: #45a049; }
-.btn-reject:hover { background: #da190b; }
-.no-posts {
-  text-align: center;
-  color: var(--text-light);
-  font-size: 1.2rem;
-  margin: 50px 0;
-.refresh-btn {
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-  padding: 0.6em 1.5em; 
-  width: auto;           
-  display: inline-block; 
-  border-radius: 8px;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+#img-viewer img { max-width: 90%; max-height: 90%; border-radius: 10px; }
+.popup-content { background: var(--card-bg); width: 90%; max-width: 600px; padding: 18px; border-radius: 12px; }
+
+/* Knowledge Extras */
+.knowledge-updates h3 { text-align: center; color: var(--primary-color); margin: 20px 0; font-size: 1.4rem; }
+.knowledge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+/* =================================== 
+   9. MEDIA QUERIES 
+   =================================== */
+@media (max-width: 768px) {
+  #login-link, #register-link { display: none; } /* Ưu tiên sidebar trên mobile */
 }
 
-.refresh-btn:hover {
-  background: var(--primary-hover);
-  transform: scale(1.05);
-}
-.refresh-btn:active {
-  transform: scale(0.98);
-}
-}
 @media (max-width: 600px) {
   .admin-actions { flex-direction: column; }
   .post-images img { max-width: 100%; }

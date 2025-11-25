@@ -19,13 +19,10 @@
 
   <div class="admin-container">
     <div class="admin-header">
-      <h1>Quản lý bài viết chờ duyệt</h1>
-      <div class="pending-count" id="pending-count">Đang tải...</div>
-    </div>
-
+  <h1>Quản lý bài viết chờ duyệt</h1>
+  <div class="pending-count" id="pending-count">Đang tải...</div>
     <div id="pending-posts">Đang tải bài viết chờ duyệt...</div>
-  </div>
-
+</div>
   <script src="theme.js"></script>
   <script>
     const token = localStorage.getItem("token");
@@ -155,10 +152,8 @@
       div.textContent = text;
       return div.innerHTML.replace(/\n/g, '<br>');
     }
-
-    // Tự động reload mỗi 30 giây
-    setInterval(loadPendingPosts, 30000);
-    loadPendingPosts();
+setInterval(loadPendingPosts, 30000);
+loadPendingPosts();
   </script>
 </body>
 </html>

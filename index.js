@@ -12,6 +12,7 @@ import adminRoutes from "./routes/admin.js";
 import commentRoutes from "./routes/comments.js";
 import { connectDB } from "./config/db.js";
 import sitemapRoute from "./routes/sitemap.js";
+import autoModerateRoutes from './routes/auto-moderate.js';
 dotenv.config();
 connectDB();
 const app = express();
@@ -44,6 +45,7 @@ app.use("/posts", postRoutes);
 app.use("/admin", adminRoutes);
 app.use("/comments", commentRoutes);
 app.use('/api', knowledgeRoutes);
+app.use('/admin/auto-moderate', autoModerateRoutes);
 
 // Static frontend
 app.use(express.static(path.join(__dirname, "public")));

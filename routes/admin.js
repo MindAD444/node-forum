@@ -6,7 +6,7 @@ import { requireAdmin } from "../middleware/admin.js";
 const router = express.Router();
 
 // Lấy danh sách bài chờ duyệt
-router.get("/pending", auth("user"),requireAdmin,  async (req, res) => {
+router.get("/pending", auth("user"),  async (req, res) => {
   try {
     const posts = await Post.find({ approved: false })
       .populate("author", "username")

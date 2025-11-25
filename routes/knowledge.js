@@ -18,12 +18,10 @@ const SOURCES = [
   { name: "Hacker News",       url: "https://api.allorigins.win/raw?url=https://hnrss.org/newest" },
   { name: "VnExpress KH",      url: "https://vnexpress.net/rss/khoa-hoc.rss" },
   { name: "Tinhte AI",         url: "https://tinhte.vn/rss/ai.rss" },
-  { name: "Genk AI",           url: "https://genk.vn/rss/ai.rss" },
   { name: "ScienceDaily",      url: "https://www.sciencedaily.com/rss/all.xml" },
-  // THAY ĐỔI QUAN TRỌNG:
-  { name: "Viblo",             url: "https://viblo.asia/newest.rss" },  // RSS mới, không 500 nữa!
-  { name: "Spiderum",          url: "https://api.allorigins.win/raw?url=https://spiderum.com/rss" }, // Dùng proxy + fix entity
   { name: "TopDev",            url: "https://topdev.vn/blog/feed/" },
+  { name: "Genk AI",  url: "https://genk.vn/rss/ai.rss" },
+  { name: "Viblo",    url: "https://viblo.asia/rss/posts/newest.rss" },
 ];
 
 async function fetchAllAndMix() {
