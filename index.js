@@ -44,7 +44,7 @@ app.use("/auth", authRoutes);
 app.use("/posts", postRoutes);
 app.use("/admin", adminRoutes);
 app.use("/comments", commentRoutes);
-app.use('/api', knowledgeRoutes);
+app.use('/information', knowledgeRoutes);
 app.use('/admin/auto-moderate', autoModerateRoutes);
 
 // Static frontend

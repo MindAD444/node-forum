@@ -126,7 +126,7 @@ async function loadKnowledge(page = 1, append = false) {
   if (oldBtn) oldBtn.remove();
 
   try {
-    const res = await fetch(`/api/knowledge?page=${page}`);
+    const res = await fetch(`/information/knowledge?page=${page}`);
     const data = await res.json();
 
     data.items.forEach(item => {
