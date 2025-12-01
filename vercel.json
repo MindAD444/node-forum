@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/auto-moderate",
-      "schedule": "0 0 * * *"
+      "schedule": "7 0 * * *"
     }
   ]
 }

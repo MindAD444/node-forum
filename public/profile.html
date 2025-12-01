@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hồ sơ cá nhân - Forum</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="home.html" class="nav-brand">Forum</a>
+    </div>
+  </nav>
+
+  <main class="profile-container">
+    <h2>Hồ sơ cá nhân</h2>
+    
+    <form id="profile-form">
+      <div class="avatar-wrapper">
+        <img id="avatar-preview"
+     src="https://ui-avatars.com/api/?name=User&background=random"
+     alt="Avatar" class="profile-avatar">
+        <label for="avatar-input" class="upload-label">📷</label>
+        <input type="file" id="avatar-input" accept="image/*">
+      </div>
+
+      <div class="form-group">
+        <label>Email (Không thể đổi)</label>
+        <input type="text" id="email" disabled style="opacity: 0.7;">
+      </div>
+
+      <div class="form-group">
+        <label>Tên hiển thị</label>
+        <input type="text" id="username" placeholder="Nhập tên mới">
+      </div>
+
+      <p id="msg" style="margin-bottom: 10px; height: 20px;"></p>
+      <button type="submit" class="save-btn" id="save-btn">Lưu thay đổi</button>
+    </form>
+  </main>
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
+
+    const form = document.getElementById("profile-form");
+    const avatarInput = document.getElementById("avatar-input");
+    const avatarPreview = document.getElementById("avatar-preview");
+    const msg = document.getElementById("msg");
+    const saveBtn = document.getElementById("save-btn");
+
+    // 1. Tải thông tin user khi vào trang
+    async function loadProfile() {
+      try {
+        const res = await fetch("/auth/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const user = await res.json();
+        
+        if (res.ok) {
+          document.getElementById("email").value = user.email;
+          document.getElementById("username").value = user.username;
+          if (user.avatar) {
+            avatarPreview.src = user.avatar;
+          }
+        } else {
+          alert("Lỗi tải thông tin");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 2. Hiển thị ảnh xem trước khi chọn file
+    avatarInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        avatarPreview.src = URL.createObjectURL(file);
+      }
+    };
+
+    // 3. Xử lý lưu thông tin
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      msg.textContent = "Đang lưu...";
+      saveBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append("username", document.getElementById("username").value);
+      
+      // Nếu có chọn ảnh mới thì gửi lên
+      if (avatarInput.files[0]) {
+        formData.append("avatar", avatarInput.files[0]);
+      }
+
+      try {
+        const res = await fetch("/auth/me", {
+          method: "PUT",
+          headers: { "Authorization": `Bearer ${token}` }, // Không cần Content-Type khi dùng FormData
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.style.color = "green";
+          msg.textContent = "Cập nhật thành công!";
+          // Cập nhật lại thông tin trong localStorage để hiển thị ở navbar
+          localStorage.setItem("username", data.user.username);
+        } else {
+          msg.style.color = "red";
+          msg.textContent = data.error || "Có lỗi xảy ra";
+        }
+      } catch (err) {
+        msg.textContent = "Lỗi kết nối server";
+      } finally {
+        saveBtn.disabled = false;
+      }
+    };
+
+    loadProfile();
+  </script>
+</body>
+</html>

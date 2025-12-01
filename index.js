@@ -39,8 +39,8 @@ mongoose
   .catch((err) => console.error("MongoDB error:", err));
 
 // Routes
-app.use("/", sitemapRoute);
 app.use("/auth", authRoutes);
+app.use("/", sitemapRoute);
 app.use("/posts", postRoutes);
 app.use("/admin", adminRoutes);
 app.use("/comments", commentRoutes);

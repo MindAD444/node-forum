@@ -5,6 +5,13 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: { type: String }, // Có thể rỗng nếu đăng nhập bằng Google
   googleId: { type: String, unique: true, sparse: true },
+  
+  // --- THÊM TRƯỜNG AVATAR ---
+  avatar: { 
+    type: String, 
+    default: "https://ui-avatars.com/api/?name=User&background=random" // Ảnh mặc định nếu chưa có
+  },
+  
   isAdmin: {
     type: Boolean,
     default: false
