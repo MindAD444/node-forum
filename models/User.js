@@ -1,3 +1,5 @@
+// models/User.js
+
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
@@ -12,6 +14,11 @@ const userSchema = new mongoose.Schema({
     default: "https://ui-avatars.com/api/?name=User&background=random" // Ảnh mặc định nếu chưa có
   },
   
+  // 🔑 --- THÊM TRƯỜNG CHO CHÍNH SÁCH ĐỔI TÊN NGƯỜI DÙNG ---
+  usernameLastChangedAt: { type: Date, default: Date.now }, // Lần cuối đổi tên (hoặc đăng ký/đặt tên lần đầu)
+  usernameChangeCount: { type: Number, default: 0 }, // Số lần đổi tên sau lần đăng ký
+  // --------------------------------------------------------
+
   isAdmin: {
     type: Boolean,
     default: false

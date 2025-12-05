@@ -18,6 +18,8 @@
 
 
 <script>
+// Thay thế đoạn script hiện tại trong file choose-username.html:
+
 document.getElementById("save-btn").onclick = async () => {
   const username = document.getElementById("username").value.trim();
   const email = localStorage.getItem("google_email");
@@ -40,13 +42,10 @@ document.getElementById("save-btn").onclick = async () => {
     localStorage.setItem("userId", data.user.id);
     localStorage.setItem("isAdmin", data.user.isAdmin);
 
-    // Xóa tạm email google
-    localStorage.removeItem("google_email");
-    localStorage.removeItem("google_id");
-
-    window.location.href = "/home.html"; // 👉 Vào luôn tài khoản
+    window.location.href = "home.html";
   } else {
-    document.getElementById("message").textContent = data.error;
+    // 💡 LƯU Ý: Giữ lại để bắt lỗi nếu có lỗi khác (như lỗi server)
+    document.getElementById("message").textContent = data.error || "Lỗi lưu tên."; 
   }
 };
 </script>

@@ -12,6 +12,8 @@
     <div class="nav-left">
       <a href="home.html" class="nav-brand">Forum</a>
     </div>
+    <div class="nav-right">
+    </div>
   </nav>
 
   <main class="profile-container">
@@ -19,30 +21,130 @@
     
     <form id="profile-form">
       <div class="avatar-wrapper">
-        <img id="avatar-preview"
-     src="https://ui-avatars.com/api/?name=User&background=random"
-     alt="Avatar" class="profile-avatar">
-        <label for="avatar-input" class="upload-label">📷</label>
+        <img id="avatar-preview" src="https://via.placeholder.com/150" alt="Avatar" class="profile-avatar">
+        <label for="avatar-input" class="upload-label" title="Đổi ảnh đại diện">📷</label>
         <input type="file" id="avatar-input" accept="image/*">
       </div>
 
       <div class="form-group">
         <label>Email (Không thể đổi)</label>
-        <input type="text" id="email" disabled style="opacity: 0.7;">
+        <input type="text" id="email" disabled placeholder="Đang tải...">
       </div>
 
       <div class="form-group">
         <label>Tên hiển thị</label>
-        <input type="text" id="username" placeholder="Nhập tên mới">
+        <input type="text" id="username" placeholder="Nhập tên mới" required>
+      </div>
+        <p id="username-cooldown" style="font-size: 0.9em; margin-top: 5px;"></p>
+      </div>
+      <button type="submit" class="save-btn" id="save-btn">Lưu thay đổi</button>
+      <p id="msg"></p>
+    </form>
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #ddd;">
+
+    <h3>🔐 Đổi mật khẩu</h3>
+    <form id="change-password-form">
+      <div class="form-group">
+        <label>Mật khẩu hiện tại</label>
+        <input type="password" id="current-password" placeholder="Nhập mật khẩu cũ" required>
       </div>
 
-      <p id="msg" style="margin-bottom: 10px; height: 20px;"></p>
-      <button type="submit" class="save-btn" id="save-btn">Lưu thay đổi</button>
+      <div class="form-group">
+        <label>Mật khẩu mới</label>
+        <input type="password" id="new-password" placeholder="Tối thiểu 6 ký tự" required>
+      </div>
+
+      <div class="form-group">
+        <label>Xác nhận mật khẩu mới</label>
+        <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu mới" required>
+      </div>
+
+      <button type="submit" class="save-btn" id="change-pwd-btn" style="background-color: #d9534f;">
+        Cập nhật mật khẩu
+      </button>
+      <p id="pwd-msg"></p>
     </form>
   </main>
+
+  <script src="theme.js"></script>
   <script>
+    // profile.html (trong thẻ <script>)
+
+// Thêm hàm hiển thị thời gian cooldown
+function formatRemainingTime(ms) {
+    const totalDays = Math.ceil(ms / (1000 * 60 * 60 * 24));
+    if (totalDays === 0) return "";
+    return `Bạn có thể đổi tên sau ${totalDays} ngày nữa.`;
+}
+
+// 🔑 Cập nhật hàm loadProfile (hoặc thêm đoạn code này vào phần load data)
+async function loadProfile() {
+  // ... (Code lấy token, fetch /auth/me) ...
+  
+  try {
+    const res = await fetch("/auth/me", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const user = await res.json();
+    
+    // ... (Code hiển thị avatar, email, username cũ) ...
+    document.getElementById("email").value = user.email;
+    document.getElementById("username").value = user.username;
+    
+    // 🔑 LOGIC HIỂN THỊ COOLDOWN
+    const cooldownEl = document.getElementById("username-cooldown");
+    const usernameInput = document.getElementById("username");
+    
+    const now = Date.now();
+    const lastChanged = new Date(user.usernameLastChangedAt || user.createdAt).getTime();
+    const changeCount = user.usernameChangeCount || 0;
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    let cooldownDays = 0;
+    if (changeCount === 1) {
+      cooldownDays = 7;
+    } else if (changeCount >= 2) {
+      cooldownDays = 14;
+    }
+    
+    const cooldownDuration = cooldownDays * oneDay;
+    const nextChangeTime = lastChanged + cooldownDuration;
+    
+    if (cooldownDays > 0 && now < nextChangeTime) {
+      const remainingTimeMs = nextChangeTime - now;
+      const remainingMessage = formatRemainingTime(remainingTimeMs);
+      
+      cooldownEl.style.color = "orange";
+      cooldownEl.textContent = `Chính sách đổi tên: Vừa đổi ${changeCount} lần. ${remainingMessage}`;
+      
+      // Vô hiệu hóa ô nhập liệu tên người dùng (chỉ cho phép đổi avatar/email)
+      // usernameInput.disabled = true; // Bỏ comment nếu muốn chặn nhập
+      
+      // Thêm kiểm tra trước khi Submit
+      usernameInput.dataset.cooldown = nextChangeTime; // Lưu thời gian để kiểm tra lại khi submit
+    } else {
+      cooldownEl.style.color = "green";
+      cooldownEl.textContent = changeCount === 0 
+        ? "Đây là lần đổi tên đầu tiên của bạn."
+        : `Bạn đã đổi tên ${changeCount} lần. Lần tiếp theo (thứ ${changeCount + 1}) sẽ có cooldown ${changeCount === 1 ? '14' : '7'} ngày.`; // Gần đúng cho lần đổi sau
+      // usernameInput.disabled = false;
+      usernameInput.dataset.cooldown = 0;
+    }
+    
+  } catch(err) {
+    // ... (Xử lý lỗi) ...
+  }
+}
+
+// Gọi loadProfile() khi trang load
+// loadProfile();
+    // 1. Kiểm tra đăng nhập
     const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
+    if (!token) {
+      alert("Vui lòng đăng nhập để truy cập!");
+      window.location.href = "login.html";
+    }
 
     const form = document.getElementById("profile-form");
     const avatarInput = document.getElementById("avatar-input");
@@ -50,29 +152,40 @@
     const msg = document.getElementById("msg");
     const saveBtn = document.getElementById("save-btn");
 
-    // 1. Tải thông tin user khi vào trang
+    // 2. Hàm tải thông tin User
     async function loadProfile() {
       try {
         const res = await fetch("/auth/me", {
           headers: { "Authorization": `Bearer ${token}` }
         });
+
+        if (!res.ok) {
+           if(res.status === 401 || res.status === 403) {
+             alert("Phiên đăng nhập hết hạn.");
+             localStorage.removeItem("token");
+             window.location.href = "login.html";
+             return;
+           }
+           throw new Error("Không thể tải thông tin.");
+        }
+
         const user = await res.json();
         
-        if (res.ok) {
-          document.getElementById("email").value = user.email;
-          document.getElementById("username").value = user.username;
-          if (user.avatar) {
-            avatarPreview.src = user.avatar;
-          }
-        } else {
-          alert("Lỗi tải thông tin");
+        // Gán dữ liệu vào form (Sử dụng || "" để tránh lỗi undefined cho email)
+        document.getElementById("email").value = user.email || "";
+        document.getElementById("username").value = user.username;
+        if (user.avatar) {
+          avatarPreview.src = user.avatar;
         }
+
       } catch (err) {
         console.error(err);
+        msg.style.color = "red";
+        msg.textContent = "Lỗi tải hồ sơ: " + err.message;
       }
     }
 
-    // 2. Hiển thị ảnh xem trước khi chọn file
+    // 3. Xem trước ảnh khi chọn file
     avatarInput.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -80,16 +193,17 @@
       }
     };
 
-    // 3. Xử lý lưu thông tin
+    // 4. Xử lý CẬP NHẬT THÔNG TIN (Tên & Avatar)
     form.onsubmit = async (e) => {
       e.preventDefault();
       msg.textContent = "Đang lưu...";
+      msg.style.color = "blue";
       saveBtn.disabled = true;
 
       const formData = new FormData();
       formData.append("username", document.getElementById("username").value);
       
-      // Nếu có chọn ảnh mới thì gửi lên
+      // Chỉ gửi ảnh nếu người dùng có chọn file mới
       if (avatarInput.files[0]) {
         formData.append("avatar", avatarInput.files[0]);
       }
@@ -97,7 +211,7 @@
       try {
         const res = await fetch("/auth/me", {
           method: "PUT",
-          headers: { "Authorization": `Bearer ${token}` }, // Không cần Content-Type khi dùng FormData
+          headers: { "Authorization": `Bearer ${token}` }, // FormData tự set Content-Type
           body: formData
         });
 
@@ -105,20 +219,80 @@
 
         if (res.ok) {
           msg.style.color = "green";
-          msg.textContent = "Cập nhật thành công!";
-          // Cập nhật lại thông tin trong localStorage để hiển thị ở navbar
+          msg.textContent = "✅ Cập nhật thành công!";
+          // Cập nhật localStorage để hiển thị đúng ở Navbar
           localStorage.setItem("username", data.user.username);
         } else {
           msg.style.color = "red";
-          msg.textContent = data.error || "Có lỗi xảy ra";
+          msg.textContent = "❌ " + (data.error || "Có lỗi xảy ra");
         }
       } catch (err) {
-        msg.textContent = "Lỗi kết nối server";
+        msg.style.color = "red";
+        msg.textContent = "Lỗi kết nối server.";
       } finally {
         saveBtn.disabled = false;
       }
     };
 
+    // 5. Xử lý ĐỔI MẬT KHẨU
+    const pwdForm = document.getElementById("change-password-form");
+    const pwdMsg = document.getElementById("pwd-msg");
+    const changePwdBtn = document.getElementById("change-pwd-btn");
+
+    pwdForm.onsubmit = async (e) => {
+      e.preventDefault();
+      pwdMsg.textContent = "";
+      
+      const currentPassword = document.getElementById("current-password").value;
+      const newPassword = document.getElementById("new-password").value;
+      const confirmPassword = document.getElementById("confirm-password").value;
+
+      // Validate Client
+      if (newPassword !== confirmPassword) {
+        pwdMsg.style.color = "red";
+        pwdMsg.textContent = "❌ Mật khẩu xác nhận không khớp!";
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        pwdMsg.style.color = "red";
+        pwdMsg.textContent = "❌ Mật khẩu mới phải có ít nhất 6 ký tự.";
+        return;
+      }
+
+      changePwdBtn.disabled = true;
+      changePwdBtn.textContent = "Đang xử lý...";
+
+      try {
+        const res = await fetch("/auth/change-password", {
+          method: "PUT",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          pwdMsg.style.color = "green";
+          pwdMsg.textContent = "✅ " + data.message;
+          pwdForm.reset(); // Xóa trắng form mật khẩu
+        } else {
+          pwdMsg.style.color = "red";
+          pwdMsg.textContent = "❌ " + data.error;
+        }
+      } catch (err) {
+        pwdMsg.style.color = "red";
+        pwdMsg.textContent = "❌ Lỗi kết nối server.";
+      } finally {
+        changePwdBtn.disabled = false;
+        changePwdBtn.textContent = "Cập nhật mật khẩu";
+      }
+    };
+
+    // Chạy khi tải trang
     loadProfile();
   </script>
 </body>

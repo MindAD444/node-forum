@@ -13,32 +13,27 @@ import commentRoutes from "./routes/comments.js";
 import { connectDB } from "./config/db.js";
 import sitemapRoute from "./routes/sitemap.js";
 import autoModerateRoutes from './routes/auto-moderate.js';
+
 dotenv.config();
-connectDB();
+
+// 👉 BẮT BUỘC await để Mongoose connect xong trước khi xử lý route
+await connectDB();
+
 const app = express();
-// Middleware chung
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// __dirname cho ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
-
-// Routes
 app.use("/auth", authRoutes);
 app.use("/", sitemapRoute);
 app.use("/posts", postRoutes);
@@ -47,7 +42,6 @@ app.use("/comments", commentRoutes);
 app.use('/information', knowledgeRoutes);
 app.use('/admin/auto-moderate', autoModerateRoutes);
 
-// Static frontend
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;

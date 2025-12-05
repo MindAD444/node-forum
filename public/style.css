@@ -1,6 +1,6 @@
 /* =================================== 
-   1. RESET & VARIABLES 
-   =================================== */
+ * 1. RESET & VARIABLES 
+ * =================================== */
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
@@ -46,8 +46,8 @@ body {
 .container { max-width: 900px; margin: auto; padding: 20px; }
 
 /* =================================== 
-   2. NAVBAR 
-   =================================== */
+ * 2. NAVBAR & SIDEBAR 
+ * =================================== */
 .navbar {
   position: fixed; top: 0; left: 0; width: 100%;
   background: var(--card-bg);
@@ -59,23 +59,16 @@ body {
 }
 .navbar-hidden { transform: translateY(-100%); }
 .nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
-
 .nav-brand { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); text-decoration: none; }
-.hamburger-btn { font-size: 1.8rem; background: none; border: none; color: var(--text-color); cursor: pointer; padding: 0 10px; transition: 0.2s; }
-
+.hamburger-btn, .theme-toggle { font-size: 1.3rem; background: none; border: none; color: var(--text-color); cursor: pointer; padding: 0.6em 10px; transition: 0.2s; }
 .nav-right a {
   padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; text-decoration: none;
   background: var(--primary-color); color: white; transition: 0.2s;
 }
 .nav-right a:hover { background: var(--primary-hover); }
 .nav-right a:active { transform: scale(0.98); }
-
 #username-display-nav { font-weight: 600; color: var(--text-light); margin-right: 10px; }
-.theme-toggle { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 0.6em; }
 
-/* =================================== 
-   3. SIDEBAR 
-   =================================== */
 .sidebar {
   position: fixed; top: 0; left: -300px; width: 300px; max-width: 80%; height: 100%;
   background: var(--card-bg);
@@ -84,21 +77,17 @@ body {
   padding: 60px 20px 20px; display: flex; flex-direction: column;
 }
 .sidebar.open { left: 0; }
-
 .sidebar-overlay {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 1001;
   opacity: 0; visibility: hidden; transition: 0.3s;
 }
 .sidebar-overlay.open { opacity: 1; visibility: visible; }
-
 .close-sidebar-btn {
   position: absolute; top: 10px; right: 15px; font-size: 2.2rem;
   background: none; border: none; color: var(--text-color); cursor: pointer;
 }
 .close-sidebar-btn:hover { color: var(--danger-color); }
-
 #username-display-sidebar { font-size: 1.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 20px; word-break: break-all; }
-
 .sidebar-link {
   display: block; width: 100%; padding: 12px 10px; margin-bottom: 8px;
   text-decoration: none; color: var(--text-color); border-radius: 8px;
@@ -107,10 +96,8 @@ body {
 }
 .sidebar-link:hover { background: var(--input-bg); }
 .sidebar-link:active { background: var(--primary-color); color: white; transform: scale(0.98); }
-
 .sidebar-action-link { background: var(--primary-color); color: white !important; text-align: center; margin-top: 10px; }
 .sidebar-action-link:hover { background: var(--primary-hover); }
-
 .sidebar-logout-btn {
   background: transparent !important; color: var(--danger-color) !important;
   border: 2px solid var(--danger-color); text-align: center; margin-top: 10px; font-weight: 600;
@@ -118,9 +105,10 @@ body {
 .sidebar-logout-btn:hover { background: var(--input-bg) !important; }
 .sidebar-logout-btn:active { background: var(--danger-color) !important; color: white !important; }
 
+
 /* =================================== 
-   4. FORMS, INPUTS & COMMON BUTTONS 
-   =================================== */
+ * 3. FORMS, INPUTS & COMMON BUTTONS 
+ * =================================== */
 .form-container, .create-post-container {
   background: var(--card-bg); padding: 25px 35px; border-radius: 12px;
   box-shadow: 0 3px 10px var(--shadow-light); width: 90%; max-width: 500px;
@@ -135,13 +123,19 @@ input, textarea {
 }
 input:focus, textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2); }
 
-button, .join-btn, .refresh-btn {
+button, .join-btn, .refresh-btn, .save-btn {
   background: var(--primary-color); color: #fff; border: none;
   padding: 12px; border-radius: 6px; font-size: 16px; cursor: pointer;
   transition: 0.2s; display: inline-block;
+  font-weight: bold; /* Thêm vào từ .save-btn */
 }
-button:hover, .join-btn:hover, .refresh-btn:hover { background: var(--primary-hover); transform: scale(1.02); }
+button:hover, .join-btn:hover, .refresh-btn:hover, .save-btn:hover:not(:disabled) { 
+  background: var(--primary-hover); 
+  transform: scale(1.02); /* Chỉ áp dụng cho nút không phải .save-btn */
+  opacity: 0.9; /* Thêm vào từ .save-btn */
+}
 button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
+.save-btn:disabled { background: #ccc; cursor: wait; opacity: 1; transform: none; }
 
 /* Password Toggle */
 .input-group { position: relative; margin-bottom: 12px; }
@@ -152,8 +146,8 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 }
 
 /* =================================== 
-   5. CARDS (POSTS, ADMIN, KNOWLEDGE) 
-   =================================== */
+ * 4. CARDS, COMMENTS & POST ELEMENTS
+ * =================================== */
 .post-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
 /* Base Card Style */
@@ -161,12 +155,11 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
   background: var(--card-bg); padding: 20px; border-radius: 12px;
   box-shadow: 0 3px 10px var(--shadow-light); transition: 0.2s; position: relative;
 }
+.post-card:hover, .post-card-admin:hover, .knowledge-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow-light); }
 
 /* Specific Card Styles */
 .post-card { border-left: 4px solid var(--primary-color); padding-right: 60px; }
-.post-card:hover, .post-card-admin:hover, .knowledge-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow-light); }
 .post-card-link { display: block; text-decoration: none; color: inherit; transition: transform 0.2s; }
-
 .post-card-admin { border-left: 6px solid #ff9800; margin-bottom: 20px; }
 .knowledge-card { border-left: 6px solid #10b981; max-width: 600px; margin: 20px auto; text-align: center; padding: 24px; }
 .knowledge-item { border-left: 5px solid #10b981; padding: 16px; margin-bottom: 16px; word-wrap: break-word; }
@@ -176,15 +169,15 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 }
 .post-card img:hover { transform: scale(1.03); }
 
-/* =================================== 
-   6. COMMENTS & DELETE BUTTONS 
-   =================================== */
+/* Comments */
 .comment-item {
   background: var(--input-bg); padding: 12px; border-radius: 8px;
   border-left: 3px solid var(--primary-color); margin-top: 10px;
   position: relative; padding-right: 40px;
 }
+.load-more-btn { background: var(--secondary-color); margin-top: 12px; width: auto; }
 
+/* Delete Buttons */
 .delete-comment-btn, .delete-post-btn {
   background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color);
   padding: 4px; border-radius: 6px; cursor: pointer;
@@ -195,41 +188,117 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 .post-card .delete-post-btn { top: 10px; right: 10px; }
 .comment-item .delete-comment-btn { top: 6px; right: 6px; }
 
-.load-more-btn { background: var(--secondary-color); margin-top: 12px; width: auto; }
+/* =================================== 
+ * 5. PROFILE PAGE 
+ * =================================== */
+.profile-container {
+  max-width: 600px;
+  margin: 80px auto 40px;
+  background: var(--card-bg); /* Sửa từ --bg-secondary */
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--shadow-light); /* Sửa shadow */
+}
+
+.profile-container h2, .profile-container h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--text-color); /* Sửa từ --text-primary */
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 30px;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary-color);
+  background-color: var(--input-bg); /* Sửa từ #eee */
+}
+
+.upload-label {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: var(--primary-color);
+  color: white;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+.upload-label:hover { background: var(--primary-hover); }
+
+#avatar-input { display: none; }
+
+.form-group { margin-bottom: 20px; text-align: left; } /* Thêm text-align: left; */
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--text-color); /* Sửa từ --text-primary */
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color); /* Sửa từ #ccc */
+  background: var(--input-bg); /* Sửa từ --bg-primary */
+  color: var(--text-color); /* Sửa từ --text-primary */
+  font-size: 16px;
+}
+
+.form-group input:disabled {
+  background: var(--border-color); /* Thay đổi màu nền */
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+#msg, #pwd-msg {
+  text-align: center;
+  min-height: 20px;
+  margin-top: 10px;
+  font-weight: 500;
+}
 
 /* =================================== 
-   7. TOGGLE SWITCH (Tabs) - ĐÃ SỬA GỘP 
-   =================================== */
+ * 6. TOGGLE SWITCH (Tabs) 
+ * =================================== */
 .toggle-switch {
   position: relative; display: flex; width: 320px; height: 50px;
   margin: 25px auto; background: var(--input-bg); border-radius: 50px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.2); overflow: hidden;
   border: 2px solid rgba(255,255,255,0.1);
 }
-
 .toggle-btn {
   flex: 1; border: none; background: transparent; color: var(--text-light);
   font-weight: 600; font-size: 1rem; z-index: 2; cursor: pointer; transition: color 0.4s;
-  padding: 0; margin: 0; width: 50%; /* Reset button styles */
+  padding: 0; margin: 0; width: 50%;
 }
-.toggle-btn:hover { transform: none; background: transparent; } /* Remove generic button hover */
+.toggle-btn:hover { transform: none; background: transparent; }
 .toggle-btn.active { color: white; }
-
 .toggle-slider {
   position: absolute; top: 4px; left: 4px; width: calc(50% - 8px); height: calc(100% - 8px);
   background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50px;
   transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); pointer-events: none; z-index: 1;
 }
-
-/* Khi nút thứ 2 (data-tab="knowledge") active thì trượt slider */
 .toggle-btn[data-tab="knowledge"].active ~ .toggle-slider { transform: translateX(100%); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
 /* =================================== 
-   8. PAGE SPECIFIC (Landing, Admin, Popups) 
-   =================================== */
+ * 7. PAGE SPECIFIC (Landing, Admin, Popups) 
+ * =================================== */
 /* Landing Page */
 .landing-main { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .landing-header h1 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 0.5rem; }
@@ -242,8 +311,9 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 .admin-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid var(--primary-color); padding-bottom: 15px; }
 .pending-count { background: var(--primary-color); color: white; padding: 8px 16px; border-radius: 50px; font-weight: bold; display: inline-block; }
 .admin-actions { display: flex; gap: 12px; margin-top: 20px; }
-.btn-approve { background: #4caf50; flex: 1; border-radius: 50px; padding: 12px; color: white; border: none; cursor: pointer; font-weight: bold;}
-.btn-reject { background: #f44336; flex: 1; border-radius: 50px; padding: 12px; color: white; border: none; cursor: pointer; font-weight: bold;}
+.btn-approve, .btn-reject { flex: 1; border-radius: 50px; padding: 12px; color: white; border: none; cursor: pointer; font-weight: bold;}
+.btn-approve { background: #4caf50; }
+.btn-reject { background: #f44336; }
 .no-posts { text-align: center; color: var(--text-light); font-size: 1.2rem; margin: 50px 0; }
 
 /* Popup & Image Viewer */
@@ -259,87 +329,12 @@ button:active, .join-btn:active, .refresh-btn:active { transform: scale(0.98); }
 .knowledge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
 /* =================================== 
-   9. MEDIA QUERIES 
-   =================================== */
+ * 8. MEDIA QUERIES 
+ * =================================== */
 @media (max-width: 768px) {
-  #login-link, #register-link { display: none; } /* Ưu tiên sidebar trên mobile */
+  #login-link, #register-link { display: none; }
 }
-
 @media (max-width: 600px) {
   .admin-actions { flex-direction: column; }
   .post-images img { max-width: 100%; }
 }
-.profile-container {
-      max-width: 600px;
-      margin: 80px auto 20px;
-      background: var(--bg-secondary);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    .avatar-wrapper {
-      position: relative;
-      width: 150px;
-      height: 150px;
-      margin: 0 auto 20px;
-    }
-
-    .profile-avatar {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid var(--primary-color);
-    }
-
-    .upload-label {
-      position: absolute;
-      bottom: 5px;
-      right: 5px;
-      background: var(--primary-color);
-      color: white;
-      padding: 8px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    
-    .upload-label:hover { opacity: 0.9; }
-
-    #avatar-input { display: none; }
-
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--text-primary);
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-    }
-
-    .save-btn {
-      background: var(--primary-color);
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-    }
-
-    .save-btn:disabled { background: #ccc; }
