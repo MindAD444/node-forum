@@ -12,23 +12,24 @@
     <div class="nav-left">
       <a href="index.html" class="nav-brand">Forum</a>
     </div>
+  </nav>    
 <main class="form-container">
   <h1>Đăng nhập</h1>
-
   <form id="login-form">
-    <input id="username" placeholder="Tên hoặc Email" required>
+    <input type="text" id="username" placeholder="Tên hoặc Email" required>
     <div class="input-group">
     <input id="password" type="password" placeholder="Mật khẩu" required>
     <span class="toggle-password" data-target="password">👁️</span>
     </div>
+    <a href="forgot-password.html" style="display: block; text-align: right;">Quên mật khẩu?</a>
+<br>
     <button type="submit" >Đăng nhập</button>
-  </form>
-
-  <div id="g_id_onload"
+    <div id="g_id_onload"
        data-client_id="38606798612-fq044elhgado3bhf3a62e9boh4rom469.apps.googleusercontent.com"
        data-callback="googleLogin"></div>
-  <div class="g_id_signin" data-type="standard"></div>
-  <p>Chưa có tài khoản?<a href="register.html">Đăng ký<p/>
+    <div class="g_id_signin" data-type="standard"></div>
+  </form>
+  <p>Chưa có tài khoản?<a href="register.html"> Đăng ký<p/>
   <p id="message"></p>
 </main>
 <script src="theme.js"></script>

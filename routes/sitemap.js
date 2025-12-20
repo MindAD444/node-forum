@@ -7,7 +7,7 @@ const router = Router();
 router.get("/sitemap.xml", async (req, res) => {
   try {
     const smStream = new SitemapStream({
-      hostname: "https://forum.lingangu.space"
+      hostname: "https://forum.naifa.site"
     });
 
     // Static pages
