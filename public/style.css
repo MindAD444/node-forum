@@ -75,6 +75,7 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 .nav-brand { 
     font-weight: 800; font-size: 1.6rem; 
     background: var(--primary-gradient); 
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-decoration: none; 
@@ -213,7 +214,7 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
     font-size: 1.8rem; margin-bottom: 20px; font-weight: 700; text-align: center;
 }
 
-.input-group { position: relative; width: 100%; }
+.input-group { position: relative; width: 100%; margin-bottom: 15px; }
 
 input[type="text"], input[type="email"], input[type="password"], textarea, select {
     background-color: var(--input-bg); color: var(--text-color);
@@ -294,7 +295,7 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
     padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;
     font-weight: 600; transition: var(--transition);
 }
-.tag-item:hover { filter: brightness(0.9); text-decoration: underline; }
+.tag-item:hover { filter: brightness(0.9); }
 
 /* Nút xóa bài viết & bình luận */
 .delete-post-btn, .delete-comment-btn {
@@ -380,7 +381,8 @@ body.landing-page {
     font-weight: 800; 
     margin: 40px 0 10px; /* Giảm margin để không đẩy nội dung xuống quá sâu */
     background: var(--primary-gradient); 
-    -webkit-background-clip: text; 
+    background-clip: text;
+    -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-align: center;
 }
