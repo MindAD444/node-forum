@@ -68,11 +68,25 @@
 
   <script src="theme.js"></script>
   <script>
-    // 1. Kiểm tra đăng nhập
+    // 1. Kiểm tra đăng nhập + kiểm tra token hết hạn
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Vui lòng đăng nhập để truy cập!");
-      window.location.href = "login.html";
+    function isTokenExpired(tok) {
+      if (!tok) return true;
+      try {
+        const parts = tok.split('.');
+        if (parts.length !== 3) return true;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        if (!payload.exp) return false;
+        return Date.now() / 1000 > payload.exp;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    if (!token || isTokenExpired(token)) {
+      alert('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
+      localStorage.clear();
+      window.location.href = 'login.html';
     }
 
     // Format remaining cooldown days
@@ -85,9 +99,9 @@
     // Load profile and show cooldown info
     async function loadProfile() {
       try {
-        const res = await fetch("/auth/me", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+          const res = await fetch("/auth/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
 
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
@@ -99,7 +113,12 @@
           throw new Error("Không thể tải thông tin.");
         }
 
-        const user = await res.json();
+        let user;
+        try {
+          user = await res.json();
+        } catch (parseErr) {
+          throw new Error('Dữ liệu trả về từ server không hợp lệ.');
+        }
 
         document.getElementById("email").value = user.email || "";
         document.getElementById("username").value = user.username || "";
