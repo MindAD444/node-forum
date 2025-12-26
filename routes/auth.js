@@ -95,21 +95,26 @@ router.post('/login', async (req, res) => {
   if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(400).json({ error: "Sai thông tin đăng nhập." });
 
-  const token = jwt.sign(
-    { id: user._id, username: user.username, isAdmin: user.isAdmin },
+ const token = jwt.sign(
+    { 
+        id: user._id, 
+        username: user.username, 
+        role: user.role
+    },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+    { expiresIn: '7d' }
+);
 
-  res.json({ 
-    token, 
-    user: { 
-      id: user._id, 
-      username: user.username, 
-      avatar: user.avatar,
-      isAdmin: user.isAdmin 
-    } 
-  });
+// Trả về cho client
+res.json({
+    token,
+    user: {
+        id: user._id,
+        username: user.username,
+    role: user.role,
+    avatar: user.avatar
+    }
+});
 });
 
 // ============================================================
@@ -131,7 +136,7 @@ router.post("/google-login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, username: user.username, isAdmin: user.isAdmin },
+      { id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -139,7 +144,7 @@ router.post("/google-login", async (req, res) => {
     return res.json({
       status: "OK",
       token,
-      user: { id: user._id, username: user.username, avatar: user.avatar, isAdmin: user.isAdmin }
+      user: { id: user._id, username: user.username, avatar: user.avatar, role: user.role }
     });
 
   } catch (err) {
@@ -161,7 +166,7 @@ router.post("/set-username", async (req, res) => {
   });
 
   const token = jwt.sign(
-    { id: user._id, username: user.username, isAdmin: user.isAdmin },
+    { id: user._id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -169,7 +174,7 @@ router.post("/set-username", async (req, res) => {
   return res.json({
     success: true,
     token,
-    user: { id: user._id, username: user.username, isAdmin: user.isAdmin }
+    user: { id: user._id, username: user.username, role: user.role, avatar: user.avatar }
   });
 });
 
@@ -232,14 +237,8 @@ router.post('/forgot-password/reset', async (req, res) => {
 
 // [GET] /auth/me - Lấy thông tin
 router.get('/me', auth('user'), async (req, res) => {
-  try {
-    // Select cụ thể các trường để tránh undefined
-    const user = await User.findById(req.user.id).select('username email avatar isAdmin');
-    if (!user) return res.status(404).json({ error: "Không tìm thấy người dùng" });
+    const user = await User.findById(req.user.id).select('-password');
     res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: "Lỗi server" });
-  }
 });
 
 // [PUT] /auth/me - Cập nhật thông tin (Tên & Avatar)
@@ -332,7 +331,7 @@ router.put('/me', auth('user'), upload.single('avatar'), async (req, res) => {
       user: {
         id: updatedUser._id,
         username: updatedUser.username,
-        isAdmin: updatedUser.isAdmin,
+        role: updatedUser.role,
         avatar: updatedUser.avatar
       }
     });

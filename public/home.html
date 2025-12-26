@@ -15,10 +15,11 @@
       <a href="index.html" class="nav-brand">Forum</a>
     </div>
     <div class="nav-right">
-
       <a href="login.html" id="login-link">Đăng nhập</a>
       <a href="register.html" id="register-link">Đăng ký</a>
-      <a href="profile.html"><span id="username-display-nav"></span></a>
+      <a href="profile.html" id="profile-link" class="profile-btn hidden" title="Xem hồ sơ">
+        <img id="nav-avatar" src="" alt="Avatar">
+      </a>
     </div>
   </nav>
 
@@ -29,14 +30,13 @@
       <span id="username-display-sidebar"></span>
       <a href="create.html" id="create-link" class="sidebar-link hidden">Đăng bài</a>
       <a href="admin.html" id="admin-link" class="sidebar-link hidden">Quản trị</a>
-      <button id="logout-btn" class="sidebar-link sidebar-logout-btn hidden">Đăng xuất</button>
+      <button id="logout-nav" class="sidebar-link sidebar-logout-btn hidden">Đăng xuất</button>
     </div>
     <div id="sidebar-guest" class="hidden">
       <p>Bạn cần đăng nhập để sử dụng đầy đủ chức năng</p>
       <a href="login.html" class="sidebar-link sidebar-primary-btn">Đăng nhập</a>
       <a href="register.html" class="sidebar-link sidebar-primary-btn">Đăng ký</a>
     </div>
-    <hr>
     <div class="sidebar-item">
       <span>Chế độ</span>
       <button id="theme-toggle" class="theme-toggle">🌓</button>
@@ -122,10 +122,6 @@ async function loadKnowledge(page = 1, append = false) {
   const itemsContainer = document.getElementById("knowledge-items");
   const actionsContainer = document.getElementById("knowledge-actions");
 
-  // Xóa nút cũ
-  const oldBtn = document.getElementById('load-more-knowledge');
-  if (oldBtn) oldBtn.remove();
-
   try {
     const res = await fetch(`/information/knowledge?page=${page}`);
     const data = await res.json();
@@ -152,7 +148,6 @@ async function loadKnowledge(page = 1, append = false) {
       `;
       itemsContainer.appendChild(div);
     });
-    // Nút Xem thêm
     if (data.hasMore) {
       const btn = document.createElement('button');
       btn.id = 'load-more-knowledge';
@@ -173,8 +168,6 @@ async function loadKnowledge(page = 1, append = false) {
     isLoading = false;
   }
 }
-
-// Nút làm mới
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('knowledge-list').addEventListener('click', e => {
     if (e.target.id === 'refresh-knowledge') {
@@ -187,10 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-// Gọi khi chuyển tab
-// (giữ nguyên phần toggle tab, chỉ thêm dòng gọi lại loadKnowledge khi đổi category nếu cần)
-    // Toggle switch + tab
     document.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
@@ -200,18 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.dataset.tab === 'community' ? loadCommunity() : loadKnowledge();
       };
     });
-
-    // Sidebar
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    document.getElementById('hamburger-btn').onclick = () => {
-      sidebar.classList.add('open'); overlay.classList.add('open');
-    };
-    document.getElementById('close-sidebar-btn').onclick = overlay.onclick = () => {
-      sidebar.classList.remove('open'); overlay.classList.remove('open');
-    };
-
-    // Khởi động
     document.addEventListener('DOMContentLoaded', loadCommunity);
   </script>
 </body>

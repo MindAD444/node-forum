@@ -21,11 +21,12 @@
     <div id="pending-posts">Đang tải bài viết chờ duyệt...</div>
 </div>
   <script src="theme.js"></script>
-  <script>
+<script>
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Bạn cần đăng nhập với quyền Admin!");
-      window.location.href = "login.html";
+    const role = localStorage.getItem("role");
+    if (!token || role !== "admin") {
+      alert("Bạn không có quyền truy cập trang này!");
+      window.location.href = "home.html";
     }
 
     async function loadPendingPosts() {
@@ -63,7 +64,6 @@
             ${p.files && p.files.length > 0 ? `
   <div class="post-images">
     ${p.files.map(rawUrl => {
-      // Fix http → https + fallback nếu lỗi
       const url = rawUrl ? rawUrl.replace(/^http:\/\//i, 'https://') : '';
       return `
         <img src="${url || 'https://via.placeholder.com/300x200.png?text=No+Image'}"

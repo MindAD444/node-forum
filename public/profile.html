@@ -36,7 +36,6 @@
         <input type="text" id="username" placeholder="Nhập tên mới" required>
       </div>
         <p id="username-cooldown" style="font-size: 0.9em; margin-top: 5px;"></p>
-      </div>
       <button type="submit" class="save-btn" id="save-btn">Lưu thay đổi</button>
       <p id="msg"></p>
     </form>
@@ -69,76 +68,6 @@
 
   <script src="theme.js"></script>
   <script>
-    // profile.html (trong thẻ <script>)
-
-// Thêm hàm hiển thị thời gian cooldown
-function formatRemainingTime(ms) {
-    const totalDays = Math.ceil(ms / (1000 * 60 * 60 * 24));
-    if (totalDays === 0) return "";
-    return `Bạn có thể đổi tên sau ${totalDays} ngày nữa.`;
-}
-
-// 🔑 Cập nhật hàm loadProfile (hoặc thêm đoạn code này vào phần load data)
-async function loadProfile() {
-  // ... (Code lấy token, fetch /auth/me) ...
-  
-  try {
-    const res = await fetch("/auth/me", {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const user = await res.json();
-    
-    // ... (Code hiển thị avatar, email, username cũ) ...
-    document.getElementById("email").value = user.email;
-    document.getElementById("username").value = user.username;
-    
-    // 🔑 LOGIC HIỂN THỊ COOLDOWN
-    const cooldownEl = document.getElementById("username-cooldown");
-    const usernameInput = document.getElementById("username");
-    
-    const now = Date.now();
-    const lastChanged = new Date(user.usernameLastChangedAt || user.createdAt).getTime();
-    const changeCount = user.usernameChangeCount || 0;
-    const oneDay = 24 * 60 * 60 * 1000;
-    
-    let cooldownDays = 0;
-    if (changeCount === 1) {
-      cooldownDays = 7;
-    } else if (changeCount >= 2) {
-      cooldownDays = 14;
-    }
-    
-    const cooldownDuration = cooldownDays * oneDay;
-    const nextChangeTime = lastChanged + cooldownDuration;
-    
-    if (cooldownDays > 0 && now < nextChangeTime) {
-      const remainingTimeMs = nextChangeTime - now;
-      const remainingMessage = formatRemainingTime(remainingTimeMs);
-      
-      cooldownEl.style.color = "orange";
-      cooldownEl.textContent = `Chính sách đổi tên: Vừa đổi ${changeCount} lần. ${remainingMessage}`;
-      
-      // Vô hiệu hóa ô nhập liệu tên người dùng (chỉ cho phép đổi avatar/email)
-      // usernameInput.disabled = true; // Bỏ comment nếu muốn chặn nhập
-      
-      // Thêm kiểm tra trước khi Submit
-      usernameInput.dataset.cooldown = nextChangeTime; // Lưu thời gian để kiểm tra lại khi submit
-    } else {
-      cooldownEl.style.color = "green";
-      cooldownEl.textContent = changeCount === 0 
-        ? "Đây là lần đổi tên đầu tiên của bạn."
-        : `Bạn đã đổi tên ${changeCount} lần. Lần tiếp theo (thứ ${changeCount + 1}) sẽ có cooldown ${changeCount === 1 ? '14' : '7'} ngày.`; // Gần đúng cho lần đổi sau
-      // usernameInput.disabled = false;
-      usernameInput.dataset.cooldown = 0;
-    }
-    
-  } catch(err) {
-    // ... (Xử lý lỗi) ...
-  }
-}
-
-// Gọi loadProfile() khi trang load
-// loadProfile();
     // 1. Kiểm tra đăng nhập
     const token = localStorage.getItem("token");
     if (!token) {
@@ -146,13 +75,14 @@ async function loadProfile() {
       window.location.href = "login.html";
     }
 
-    const form = document.getElementById("profile-form");
-    const avatarInput = document.getElementById("avatar-input");
-    const avatarPreview = document.getElementById("avatar-preview");
-    const msg = document.getElementById("msg");
-    const saveBtn = document.getElementById("save-btn");
+    // Format remaining cooldown days
+    function formatRemainingTime(ms) {
+      const totalDays = Math.ceil(ms / (1000 * 60 * 60 * 24));
+      if (totalDays === 0) return "";
+      return `Bạn có thể đổi tên sau ${totalDays} ngày nữa.`;
+    }
 
-    // 2. Hàm tải thông tin User
+    // Load profile and show cooldown info
     async function loadProfile() {
       try {
         const res = await fetch("/auth/me", {
@@ -160,68 +90,104 @@ async function loadProfile() {
         });
 
         if (!res.ok) {
-           if(res.status === 401 || res.status === 403) {
-             alert("Phiên đăng nhập hết hạn.");
-             localStorage.removeItem("token");
-             window.location.href = "login.html";
-             return;
-           }
-           throw new Error("Không thể tải thông tin.");
+          if (res.status === 401 || res.status === 403) {
+            alert("Phiên đăng nhập hết hạn.");
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+            return;
+          }
+          throw new Error("Không thể tải thông tin.");
         }
 
         const user = await res.json();
-        
-        // Gán dữ liệu vào form (Sử dụng || "" để tránh lỗi undefined cho email)
+
         document.getElementById("email").value = user.email || "";
-        document.getElementById("username").value = user.username;
-        if (user.avatar) {
-          avatarPreview.src = user.avatar;
+        document.getElementById("username").value = user.username || "";
+        if (user.avatar) document.getElementById("avatar-preview").src = user.avatar;
+
+        // Cooldown logic
+        const cooldownEl = document.getElementById("username-cooldown");
+        const usernameInput = document.getElementById("username");
+        const now = Date.now();
+        const lastChanged = new Date(user.usernameLastChangedAt || user.createdAt).getTime();
+        const changeCount = user.usernameChangeCount || 0;
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        let cooldownDays = 0;
+        if (changeCount === 1) cooldownDays = 7;
+        else if (changeCount >= 2) cooldownDays = 14;
+
+        const cooldownDuration = cooldownDays * oneDay;
+        const nextChangeTime = lastChanged + cooldownDuration;
+
+        if (cooldownDays > 0 && now < nextChangeTime) {
+          const remainingTimeMs = nextChangeTime - now;
+          const remainingMessage = formatRemainingTime(remainingTimeMs);
+          cooldownEl.style.color = "orange";
+          cooldownEl.textContent = `Chính sách đổi tên: Vừa đổi ${changeCount} lần. ${remainingMessage}`;
+          usernameInput.dataset.cooldown = nextChangeTime;
+        } else {
+          cooldownEl.style.color = "green";
+          cooldownEl.textContent = changeCount === 0
+            ? "Đây là lần đổi tên đầu tiên của bạn."
+            : `Bạn đã đổi tên ${changeCount} lần.`;
+          usernameInput.dataset.cooldown = 0;
         }
 
       } catch (err) {
         console.error(err);
-        msg.style.color = "red";
-        msg.textContent = "Lỗi tải hồ sơ: " + err.message;
+        document.getElementById("msg").style.color = "red";
+        document.getElementById("msg").textContent = "Lỗi tải hồ sơ: " + err.message;
       }
     }
 
-    // 3. Xem trước ảnh khi chọn file
+    // Avatar preview
+    const avatarInput = document.getElementById("avatar-input");
+    const avatarPreview = document.getElementById("avatar-preview");
     avatarInput.onchange = (e) => {
       const file = e.target.files[0];
-      if (file) {
-        avatarPreview.src = URL.createObjectURL(file);
-      }
+      if (file) avatarPreview.src = URL.createObjectURL(file);
     };
 
-    // 4. Xử lý CẬP NHẬT THÔNG TIN (Tên & Avatar)
+    // Submit profile update (username + optional avatar)
+    const form = document.getElementById("profile-form");
+    const msg = document.getElementById("msg");
+    const saveBtn = document.getElementById("save-btn");
+
     form.onsubmit = async (e) => {
       e.preventDefault();
       msg.textContent = "Đang lưu...";
       msg.style.color = "blue";
       saveBtn.disabled = true;
 
-      const formData = new FormData();
-      formData.append("username", document.getElementById("username").value);
-      
-      // Chỉ gửi ảnh nếu người dùng có chọn file mới
-      if (avatarInput.files[0]) {
-        formData.append("avatar", avatarInput.files[0]);
+      const usernameInput = document.getElementById("username");
+      const cooldown = parseInt(usernameInput.dataset.cooldown || 0, 10);
+      const now = Date.now();
+      if (cooldown && now < cooldown) {
+        msg.style.color = "red";
+        msg.textContent = "Bạn chưa tới hạn đổi tên. Vui lòng thử lại sau.";
+        saveBtn.disabled = false;
+        return;
       }
+
+      const formData = new FormData();
+      formData.append("username", usernameInput.value.trim());
+      if (avatarInput.files[0]) formData.append("avatar", avatarInput.files[0]);
 
       try {
         const res = await fetch("/auth/me", {
           method: "PUT",
-          headers: { "Authorization": `Bearer ${token}` }, // FormData tự set Content-Type
+          headers: { "Authorization": `Bearer ${token}` },
           body: formData
         });
 
         const data = await res.json();
-
         if (res.ok) {
           msg.style.color = "green";
           msg.textContent = "✅ Cập nhật thành công!";
-          // Cập nhật localStorage để hiển thị đúng ở Navbar
-          localStorage.setItem("username", data.user.username);
+          if (data.user && data.user.username) localStorage.setItem("username", data.user.username);
+          if (data.user && data.user.role) localStorage.setItem("role", data.user.role);
+          loadProfile();
         } else {
           msg.style.color = "red";
           msg.textContent = "❌ " + (data.error || "Có lỗi xảy ra");
@@ -234,7 +200,7 @@ async function loadProfile() {
       }
     };
 
-    // 5. Xử lý ĐỔI MẬT KHẨU
+    // Change password
     const pwdForm = document.getElementById("change-password-form");
     const pwdMsg = document.getElementById("pwd-msg");
     const changePwdBtn = document.getElementById("change-pwd-btn");
@@ -242,12 +208,11 @@ async function loadProfile() {
     pwdForm.onsubmit = async (e) => {
       e.preventDefault();
       pwdMsg.textContent = "";
-      
+
       const currentPassword = document.getElementById("current-password").value;
       const newPassword = document.getElementById("new-password").value;
       const confirmPassword = document.getElementById("confirm-password").value;
 
-      // Validate Client
       if (newPassword !== confirmPassword) {
         pwdMsg.style.color = "red";
         pwdMsg.textContent = "❌ Mật khẩu xác nhận không khớp!";
@@ -274,11 +239,10 @@ async function loadProfile() {
         });
 
         const data = await res.json();
-
         if (res.ok) {
           pwdMsg.style.color = "green";
           pwdMsg.textContent = "✅ " + data.message;
-          pwdForm.reset(); // Xóa trắng form mật khẩu
+          pwdForm.reset();
         } else {
           pwdMsg.style.color = "red";
           pwdMsg.textContent = "❌ " + data.error;
@@ -292,7 +256,7 @@ async function loadProfile() {
       }
     };
 
-    // Chạy khi tải trang
+    // Run on load
     loadProfile();
   </script>
 </body>

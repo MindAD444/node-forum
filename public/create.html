@@ -41,33 +41,20 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("token");
-
-      // Nếu chưa đăng nhập → chuyển hướng
       if (!token) {
         alert("Bạn cần đăng nhập để đăng bài.");
         window.location.href = "login.html";
         return;
       }
-
-      // Ẩn nút đăng nhập và đăng ký khi đã đăng nhập
       document.getElementById("login-link").classList.add("hidden");
       document.getElementById("register-link").classList.add("hidden");
-
-      // Thêm xử lý form
       document.getElementById("create-post-form").addEventListener("submit", createPost);
-
-      // Áp dụng theme hiện tại
       if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
-
-      // Gán sự kiện chuyển theme
-      // Dù đã có trong app.js, tôi để lại đây nếu bạn dùng script riêng
       document.getElementById("theme-toggle")?.addEventListener("click", () => {
         document.body.classList.toggle("dark");
         localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
       });
     });
-
-    // Xử lý gửi bài
     async function createPost(e) {
       e.preventDefault();
       const title = document.getElementById("title").value.trim();

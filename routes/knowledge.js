@@ -1,4 +1,3 @@
-// routes/knowledge.js – BẢN CUỐI CÙNG: KHÔNG BAO GIỜ LỖI SPIDERUM & VIBLO
 import express from 'express';
 import Parser from 'rss-parser';
 
@@ -8,12 +7,8 @@ const parser = new Parser({
     item: ['description', 'content:encoded']
   }
 });
-
-// Cache 10 phút
 let cache = { items: [], lastUpdate: 0 };
 const CACHE_TTL = 10 * 60 * 1000;
-
-// Danh sách nguồn SIÊU ỔN ĐỊNH (đã loại bỏ Spiderum & Viblo cũ)
 const SOURCES = [
   { name: "Hacker News",       url: "https://api.allorigins.win/raw?url=https://hnrss.org/newest" },
   { name: "VnExpress KH",      url: "https://vnexpress.net/rss/khoa-hoc.rss" },
@@ -31,10 +26,8 @@ async function fetchAllAndMix() {
     try {
       let feed;
       if (source.name === "Spiderum") {
-        // Đặc biệt fix Spiderum: dùng text thay vì XML parser
         const response = await fetch(source.url);
         let text = await response.text();
-        // Fix lỗi & không escape
         text = text.replace(/&(?!(?:amp|lt|gt|quot|#39);)/g, '&amp;');
         feed = await parser.parseString(text);
       } else {

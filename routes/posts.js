@@ -7,29 +7,21 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 import { connectDB } from "../config/db.js";
 const router = express.Router();
-
-// Cấu hình Cloudinary Storage
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'forum-uploads',
-        format: async (req, file) => 'jpg', // Tùy chọn format
+        format: async (req, file) => 'jpg',
         public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
     },
 });
 const upload = multer({ storage: storage });
-
-// Lấy bài đã duyệt (Post Index)
 router.get('/', async (req, res) => {
   const posts = await Post.find({ approved: true })
     .populate('author', 'username')
     .sort('-createdAt');
   res.json(posts);
 });
-
-// ===============================================
-// ROUTE CHI TIẾT BÀI VIẾT: Lấy bài viết theo ID
-// ===============================================
 router.get('/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id)
@@ -41,15 +33,10 @@ router.get('/:id', async (req, res) => {
         }
         res.json(post);
     } catch (err) {
-        // Log lỗi chi tiết nếu có lỗi BSON/Cast (ID không hợp lệ)
         console.error("Lỗi khi lấy chi tiết bài viết:", err); 
-        res.status(404).json({ error: 'ID bài viết không hợp lệ.' }); // Trả về 404 cho lỗi ID không hợp lệ
+        res.status(404).json({ error: 'ID bài viết không hợp lệ.' });
     }
 });
-// ===============================================
-
-
-// Đăng bài mới (Sử dụng Cloudinary)
 router.post('/', auth('user'), upload.array('files', 5), async (req, res) => {
   try {
     const { title, content } = req.body;
@@ -63,7 +50,7 @@ router.post('/', auth('user'), upload.array('files', 5), async (req, res) => {
       content,
       files: fileUrls,
       author: req.user._id, 
-      approved: false, // Yêu cầu duyệt bài
+      approved: false,
     });
     await newPost.save();
     res.json({ message: 'Bài viết đã gửi, chờ duyệt.' });
@@ -72,15 +59,13 @@ router.post('/', auth('user'), upload.array('files', 5), async (req, res) => {
     res.status(500).json({ error: 'Lỗi server khi đăng bài' });
   }
 });
-
-// Xóa bài viết (Chủ bài viết HOẶC Admin)
 router.delete('/:id', auth('user'), async (req, res) => {
     try {
         const post = await Post.findById(req.params.id).populate('author', '_id');
         if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
 
         const isOwner = post.author._id.toString() === req.user._id.toString();
-        if (!req.user.isAdmin && !isOwner) {
+        if (req.user.role !== 'admin' && !isOwner) {
             return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này.' });
         }
         

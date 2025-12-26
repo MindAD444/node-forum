@@ -1,19 +1,13 @@
-// routes/auto-moderate.js – ĐÃ TÁI CẤU TRÚC CHO KIẾN TRÚC VERSEL/SERVERLESS (Cron Jobs)
 import express from 'express';
 import Post from '../models/Post.js';
 import 'dotenv/config'; 
 
 const router = express.Router();
-
-// Lấy API Key từ .env
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-// --- HÀM HỖ TRỢ: TẢI ẢNH TỪ URL CLOUDINARY VÀ CHUYỂN SANG BASE64 ---
 async function urlToBase64(url) {
     try {
         const response = await fetch(url);
-        // Kiểm tra Content-Type để xác định mimeType, mặc định là image/jpeg
         const contentType = response.headers.get('content-type') || "image/jpeg"; 
         
         const arrayBuffer = await response.arrayBuffer();
@@ -26,25 +20,18 @@ async function urlToBase64(url) {
             }
         };
     } catch (error) {
-        // Log lỗi nhưng trả về null để không làm crash hàm chính
         console.error("Lỗi tải ảnh:", url, error.message);
         return null; 
     }
 }
-
-// --- HÀM DUYỆT BÀI (TEXT + ẢNH) ---
 async function moderateWithAI(post) {
-  // 1. Chuẩn bị dữ liệu ảnh (nếu có)
   let imageParts = [];
   if (post.files && post.files.length > 0) {
       console.log(`...Đang tải ${post.files.length} ảnh bài "${post.title}"...`);
-      // Tải ảnh song song
       const promises = post.files.map(url => urlToBase64(url));
       const results = await Promise.all(promises);
       imageParts = results.filter(img => img !== null); 
   }
-
-  // 2. Chuẩn bị Prompt (Câu lệnh)
   const promptText = `Bạn là Admin kiểm duyệt nội dung Forum. 
   Hãy xem xét CẢ VĂN BẢN và HÌNH ẢNH (nếu có) dưới đây. Trả lời bằng tiếng Việt.
 
@@ -63,8 +50,6 @@ async function moderateWithAI(post) {
   - Tiêu đề: "${post.title}"
   - Nội dung: "${post.content.substring(0, 1000)}"
   `;
-
-  // 3. Ghép Text và Ảnh vào payload gửi đi
   const requestParts = [{ text: promptText }, ...imageParts];
 
   try {
@@ -73,7 +58,6 @@ async function moderateWithAI(post) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: requestParts }],
-        // Tắt bộ lọc mặc định để AI có thể đưa ra quyết định dựa trên luật của bạn
         safetySettings: [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -94,12 +78,9 @@ async function moderateWithAI(post) {
         console.log(`⚠️ Lỗi JSON cho bài "${post.title}" -> Duyệt mặc định.`);
       }
     } else {
-        // Nếu Gemini block (khả năng cao là ảnh/text vi phạm nặng)
         console.log(`⚠️ Gemini BLOCK response bài "${post.title}" -> REJECT vì vi phạm nặng.`);
         decision = { action: 'reject', reason: 'Nội dung/Hình ảnh vi phạm chính sách nghiêm trọng' };
     }
-
-    // 4. Lưu kết quả vào Database
     post.approved = decision.action === 'approve';
     post.moderatedBy = 'AI-Auto';
     post.moderatedAt = new Date();
@@ -117,8 +98,6 @@ async function moderateWithAI(post) {
     console.error('🔥 Lỗi gọi API Gemini:', err.message);
   }
 }
-
-// --- HÀM DỌN DẸP BÀI RÁC (Xóa bài bị từ chối quá 7 ngày) ---
 async function cleanupRejectedPosts() {
     try {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -136,18 +115,10 @@ async function cleanupRejectedPosts() {
         console.error('Lỗi dọn dẹp:', err);
     }
 }
-
-// =================================================================
-// ROUTE CHÍNH CHO CRON JOB (Thay thế cho setInterval)
-// Vercel Cron Jobs sẽ gọi route này theo lịch trình (ví dụ: mỗi 5 phút)
-// =================================================================
 router.get('/run-check', async (req, res) => {
-    
-    // 1. Dọn dẹp các bài cũ
     await cleanupRejectedPosts(); 
     
     try {
-        // Chỉ lấy các bài chưa duyệt VÀ chưa có thời gian xử lý (chưa từng được sờ tới)
         const pending = await Post.find({ 
             approved: false, 
             moderatedAt: { $exists: false } 
@@ -158,12 +129,8 @@ router.get('/run-check', async (req, res) => {
         }
 
         console.log(`[CRON] Bắt đầu duyệt ${pending.length} bài...`);
-
-        // 2. Xử lý từng bài
         for (const post of pending) {
-            // Chạy hàm duyệt bài
             await moderateWithAI(post);
-            // LƯU Ý: Không dùng setTimeout/Delay ở đây, hãy dựa vào tần suất Cron Job
         }
 
         res.status(200).json({ 
@@ -176,12 +143,8 @@ router.get('/run-check', async (req, res) => {
         res.status(500).json({ error: 'Lỗi trong quá trình duyệt bài tự động' });
     }
 });
-
-
-// Các route điều khiển thủ công (Không bắt buộc, nhưng giữ lại nếu cần)
 let AUTO_MODERATE_ENABLED = false;
 router.post('/toggle', (req, res) => {
-    // Lưu ý: Tính năng này chỉ mang tính log/display, cron job vẫn chạy
     AUTO_MODERATE_ENABLED = !AUTO_MODERATE_ENABLED;
     console.log(`AI Tự động duyệt: ${AUTO_MODERATE_ENABLED ? 'BẬT' : 'TẮT'}`);
     res.json({ enabled: AUTO_MODERATE_ENABLED });

@@ -11,12 +11,18 @@ const commentSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
+  parent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment',
+    default: null,
+  },
   content: { 
     type: String, 
     required: true, 
     trim: true,
-    maxlength: 500
+    maxlength: 669
   },
+  mentions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { 
     type: Date, 
     default: Date.now 

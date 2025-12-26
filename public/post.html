@@ -16,9 +16,10 @@
     <div class="nav-left">
       <a href="home.html" class="nav-brand">Forum</a>
     </div>
-    <div class="nav-right">
-      <a href="login.html" id="login-link" class="hidden">Đăng nhập</a>
-    </div>
+        <div class="nav-right">
+            <a href="login.html" id="login-link" class="hidden">Đăng nhập</a>
+            <button id="logout-nav" class="logout-nav hidden">Đăng xuất</button>
+        </div>
   </nav>
 
   <main class="container">
@@ -37,10 +38,13 @@
     <div id="comment-list"></div>
     <button id="load-more-comments" class="hidden load-more-btn">Xem thêm</button>
 
-    <form id="comment-form" class="hidden" style="margin-top: 20px;">
-      <textarea id="comment-input" placeholder="Viết bình luận..." required></textarea>
-      <button type="submit">Đăng bình luận</button>
-    </form>
+        <form id="comment-form" class="hidden" style="margin-top: 20px;">
+            <div id="reply-info" style="display:none; margin-bottom:8px; color:var(--text-light);">
+                Đang trả lời <span id="reply-to-name"></span> · <a href="#" id="cancel-reply">Hủy</a>
+            </div>
+            <textarea id="comment-input" placeholder="Viết bình luận... (gõ @tên để mention)" required></textarea>
+            <button type="submit">Đăng bình luận</button>
+        </form>
 
     <p id="login-hint" style="margin-top: 20px;">Bạn cần đăng nhập để bình luận.</p>
 
@@ -59,8 +63,6 @@
     const loginHint = document.getElementById("login-hint");
     let commentPage = 1;
     const commentsPerPage = 10;
-
-    // Hàm tiện ích format thời gian
     function formatTime(isoString) {
         const date = new Date(isoString);
         return date.toLocaleDateString('vi-VN', {
@@ -68,15 +70,11 @@
             hour: '2-digit', minute: '2-digit'
         });
     }
-
-    // Hiển thị ảnh lớn
     function showImage(url) {
         const viewer = document.getElementById('img-viewer');
         document.getElementById('img-viewer-content').src = url;
         viewer.classList.remove('hidden');
     }
-
-    // Xóa bài viết
     async function deletePost(postId) {
         if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) return;
 
@@ -98,10 +96,6 @@
             alert("Lỗi kết nối server.");
         }
     }
-
-    // ===========================================
-    // LOGIC BÌNH LUẬN
-    // ===========================================
     async function loadComments(reset = false) {
         if (reset) {
             commentPage = 1;
@@ -114,12 +108,10 @@
             const data = await res.json();
             const list = document.getElementById('comment-list');
 
-            if (data.comments && data.comments.length > 0) {
-                const newComments = data.comments.map(c => renderComment(c)).join('');
-                list.insertAdjacentHTML('beforeend', newComments);
-            }
-
-            // Hiển thị nút "Xem thêm" nếu còn trang
+                    if (data.comments && data.comments.length > 0) {
+                        const newComments = data.comments.map(c => renderComment(c)).join('');
+                        list.innerHTML = newComments; // replace and render nested tree
+                    }
             if (data.totalPages && commentPage < data.totalPages) {
                 document.getElementById('load-more-comments').classList.remove('hidden');
             } else {
@@ -137,23 +129,74 @@
         }
     }
 
+    let replyParentId = null;
+    function setReplyTo(commentId, username) {
+        replyParentId = commentId;
+        document.getElementById('reply-info').style.display = 'block';
+        document.getElementById('reply-to-name').textContent = '@' + username;
+        document.getElementById('comment-input').focus();
+    }
+    document.getElementById('cancel-reply').onclick = (e) => { e.preventDefault(); replyParentId = null; document.getElementById('reply-info').style.display = 'none'; };
+
     function renderComment(comment) {
         const currentUserId = localStorage.getItem("userId");
-        const isAdmin = localStorage.getItem("isAdmin") === 'true';
+        const isAdmin = localStorage.getItem("role") === 'admin';
         const isOwner = comment.author?._id === currentUserId;
 
         const deleteBtn = (isAdmin || isOwner) ?
             `<button class="delete-comment-btn" onclick="deleteComment('${comment._id}')">❌</button>` : '';
 
+        // Render mentions as highlighted spans
+        const contentHtml = (comment.content || '').replace(/@([a-zA-Z0-9_\-\.]+)/g, '<span class="comment-mention">@$1</span>');
+
+        // If there are replies (repliesCount from server), render a button to lazy-load them
+        const repliesHtml = (comment.repliesCount && comment.repliesCount > 0) ?
+            `<div class="comment-replies" id="replies-${comment._id}"><button class="load-replies-btn" data-id="${comment._id}">Xem ${comment.repliesCount} trả lời</button></div>` : '';
+
         return `
             <div class="comment-item" id="comment-${comment._id}">
                 ${deleteBtn}
-                <small style="display: block;"><strong>${comment.author?.username || "Ẩn danh"}</strong></small>
-                <small style="display: block; color: var(--text-light);">${formatTime(comment.createdAt)}</small>
-                <p style="margin-top: 5px;">${comment.content}</p>
+                <div class="comment-meta"><strong>${comment.author?.username || "Ẩn danh"}</strong> • ${formatTime(comment.createdAt)} · <a href="#" onclick="setReplyTo('${comment._id}','${comment.author?.username || ''}');return false;">Trả lời</a></div>
+                <p style="margin-top: 5px;">${contentHtml}</p>
+                ${repliesHtml}
             </div>
         `;
     }
+
+    // Lazy-load replies for a comment
+    async function loadReplies(commentId) {
+        const container = document.getElementById(`replies-${commentId}`);
+        if (!container) return;
+        // If already loaded (contains .reply-item), toggle
+        if (container.dataset.loaded === '1') {
+            container.classList.toggle('hidden');
+            return;
+        }
+        container.innerHTML = 'Đang tải...';
+        try {
+            const res = await fetch(`/comments/${postId}/replies/${commentId}`);
+            if (!res.ok) throw new Error('Không thể tải trả lời');
+            const data = await res.json();
+            const html = (data.replies || []).map(r => {
+                const contentHtml = (r.content || '').replace(/@([a-zA-Z0-9_\-\.]+)/g, '<span class="comment-mention">@$1</span>');
+                const deleteBtn = ((localStorage.getItem('role') === 'admin') || (localStorage.getItem('userId') === (r.author?._id || ''))) ?
+                    `<button class="delete-comment-btn" onclick="deleteComment('${r._id}')">❌</button>` : '';
+                return `<div class="comment-item reply-item" id="comment-${r._id}">${deleteBtn}<div class="comment-meta"><strong>${r.author?.username || 'Ẩn danh'}</strong> • ${formatTime(r.createdAt)} · <a href="#" onclick="setReplyTo('${r._id}','${r.author?.username || ''}');return false;">Trả lời</a></div><p style="margin-top:5px">${contentHtml}</p></div>`;
+            }).join('');
+            container.innerHTML = html || '<p style="color:var(--text-light)">Chưa có trả lời nào.</p>';
+            container.dataset.loaded = '1';
+        } catch (err) {
+            container.innerHTML = '<p style="color:var(--danger-color)">Lỗi khi tải trả lời.</p>';
+        }
+    }
+
+    // Delegate click for load replies buttons
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('load-replies-btn')) {
+            const id = e.target.dataset.id;
+            loadReplies(id);
+        }
+    });
 
     commentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -164,15 +207,16 @@
 
         try {
             const res = await fetch(`/comments/${postId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content })
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content, parent: replyParentId })
+                });
             if (res.ok) {
                 document.getElementById('comment-input').value = '';
+                    replyParentId = null; document.getElementById('reply-info').style.display = 'none';
                 loadComments(true);
             } else {
                 alert("Lỗi khi đăng bình luận.");
@@ -217,8 +261,6 @@
             }
 
             const post = await res.json();
-
-            // Set meta sau khi fetch thành công
             document.getElementById("meta-title").content = post.title;
             document.getElementById("meta-description").content = post.content.slice(0, 150);
             document.getElementById("meta-og-title").content = post.title;
@@ -231,7 +273,7 @@
             document.getElementById("post-content").innerHTML = post.content.replace(/\n/g, '<br>');
 
             const currentUserId = localStorage.getItem("userId");
-            const isAdmin = localStorage.getItem("isAdmin") === 'true';
+            const isAdmin = localStorage.getItem("role") === 'admin';
             const deleteBtn = document.getElementById("delete-post-btn");
 
             if (isAdmin || (post.author && currentUserId === post.author._id)) {
@@ -266,10 +308,13 @@
             commentForm.classList.remove('hidden');
             loginHint.classList.add('hidden');
             document.getElementById('login-link').classList.add('hidden');
+            const logoutNav = document.getElementById('logout-nav');
+            if (logoutNav) { logoutNav.classList.remove('hidden'); logoutNav.onclick = () => { if (confirm('Đăng xuất?')) { localStorage.clear(); location.reload(); } }; }
         } else {
             commentForm.classList.add('hidden');
             loginHint.classList.remove('hidden');
             document.getElementById('login-link').classList.remove('hidden');
+            const logoutNav = document.getElementById('logout-nav'); if (logoutNav) logoutNav.classList.add('hidden');
         }
 
         document.getElementById('load-more-comments').addEventListener('click', () => loadComments(false));

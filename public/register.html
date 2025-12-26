@@ -51,16 +51,12 @@
         const verifyForm = document.getElementById("register-verify-form");
         const messageEl = document.getElementById("message");
         let tempUser = {}; 
-
-        // --- Giai đoạn 1: Gửi yêu cầu (Request) ---
         reqForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const username = document.getElementById("username").value.trim();
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
             const confirmPassword = document.getElementById("confirm-password").value.trim(); 
-            
-            // KIỂM TRA MẬT KHẨU KHỚP NHAU
             if (password !== confirmPassword) {
                 messageEl.textContent = "❌ Mật khẩu và xác nhận mật khẩu không khớp.";
                 return;
@@ -72,7 +68,6 @@
                 const res = await fetch("/auth/register/request", { 
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    // Gửi MẬT KHẨU CHÍNH (đã được kiểm tra khớp)
                     body: JSON.stringify({ username, email, password }),
                 });
 
@@ -90,8 +85,6 @@
                 messageEl.textContent = "Lỗi server. Vui lòng thử lại.";
             }
         });
-
-        // --- Giai đoạn 2: Xác thực (Verify) & Gửi lại mã (Không thay đổi) ---
         verifyForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const code = document.getElementById("verification-code").value.trim();
@@ -152,8 +145,6 @@
                 document.getElementById("resend-code-btn").disabled = false;
             }
         });
-
-        // Logic Ẩn/Hiện Mật khẩu (Cho cả 2 trường)
         document.querySelectorAll('.toggle-password').forEach(toggleBtn => {
             toggleBtn.addEventListener('click', function() {
                 const targetId = this.getAttribute('data-target');
@@ -161,8 +152,6 @@
                 
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                
-                // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
                 this.textContent = type === 'text' ? '🔒' : '👁️';
             });
         });

@@ -9,7 +9,11 @@ export const requireAdmin = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
-    if (!user || !user.isAdmin) return res.status(403).json({ error: "Không có quyền truy cập" });
+
+    // --- KIỂM TRA ROLE LÀ ADMIN ---
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ error: "Không có quyền quản trị" });
+    }
 
     req.user = user;
     next();

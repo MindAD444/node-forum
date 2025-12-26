@@ -4,8 +4,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-    /* Màu sắc cơ bản */
-    --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
     --text-color: #1e293b;
@@ -13,16 +12,14 @@
     --input-bg: #f1f5f9;
     --border-color: #e2e8f0;
     
-    /* Màu sắc bổ sung */
-    --success-color: #10b981;
+        --success-color: #10b981;
     --error-color: #ef4444;
     --danger-color: #dc2626;
     --danger-hover: #b91c1c;
     --tag-bg: #e0f2fe;
     --tag-text: #0ea5e9;
 
-    /* Shadows & Radius */
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
     --radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -81,7 +78,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
     text-decoration: none; 
 }
 
-/* Username display trong navbar (nếu có) */
 #username-display-nav, .username-display {
     background: var(--primary-gradient);
     color: white;
@@ -96,7 +92,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
     transform: translateY(-2px);
 }
 
-/* Theme Toggle - nằm giữa nav-right */
 .theme-toggle {
     background: var(--input-bg);
     color: var(--text-color);
@@ -111,7 +106,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 }
 .theme-toggle:hover { background-color: var(--border-color); }
 
-/* Hamburger */
 .hamburger-btn {
     background: none; border: none; font-size: 1.8rem; color: var(--text-color);
     cursor: pointer; padding: 5px; border-radius: 8px; transition: var(--transition);
@@ -119,7 +113,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 }
 .hamburger-btn:hover { background-color: var(--input-bg); }
 
-/* Sidebar */
 .sidebar {
     position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
     background: var(--card-bg);
@@ -151,7 +144,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 /* =================================== 
    3. TAB SYSTEM 
    =================================== */
-/* Container cho Toggle Switch */
 .toggle-switch {
     position: relative; display: flex; 
     width: 300px; height: 50px; margin: 30px auto; 
@@ -160,7 +152,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
     padding: 4px;
 }
 
-/* Slider nền chạy */
 .toggle-slider {
     position: absolute; top: 4px; left: 4px; 
     width: calc(50% - 4px); height: calc(100% - 8px);
@@ -170,7 +161,6 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
     z-index: 1; pointer-events: none;
 }
 
-/* Buttons chữ */
 .toggle-btn {
     flex: 1; border: none; background: transparent !important; 
     color: var(--text-light); font-weight: 600; font-size: 1rem; 
@@ -179,12 +169,10 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 }
 .toggle-btn.active { color: white !important; }
 
-/* Logic trượt Slider */
 .toggle-btn[data-tab="knowledge"].active ~ .toggle-slider { 
     transform: translateX(100%); 
 }
 
-/* QUAN TRỌNG: Ẩn/Hiện Tab Content */
 .tab-content { 
     display: none; 
     animation: fadeIn 0.4s ease-out;
@@ -258,7 +246,7 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
    5. POST CARDS & TAGS + DELETE BUTTON
    =================================== */
 .post-list { 
-    display: flex; flex-direction: column; gap: 25px; 
+    display: flex; flex-direction: column; gap: 10px; 
     max-width: 800px; margin: 0 auto;
 }
 
@@ -271,8 +259,13 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
     transition: var(--transition); 
     position: relative;
     border-left: 5px solid #2563eb; 
+    margin-bottom: 15px;
 }
-
+.knowledge-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .post-card:hover { 
     transform: translateY(-4px); 
     box-shadow: var(--shadow-md); 
@@ -280,7 +273,7 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
 }
 
 .post-card h3 { margin: 0 0 10px; color: var(--text-color); font-size: 1.3rem; }
-.post-card p { color: var(--text-color); margin-bottom: 15px; line-height: 1.6; }
+.post-card p { color: var(--text-color); margin-bottom: 10px; line-height: 1.6; }
 
 .post-meta { 
     padding-top: 15px; border-top: 1px solid var(--border-color);
@@ -297,23 +290,101 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
 }
 .tag-item:hover { filter: brightness(0.9); }
 
-/* Nút xóa bài viết & bình luận */
+/* Remove underline for post links and style profile button */
+.post-card-link { text-decoration: none; color: inherit; display: block; }
+.profile-btn { display: inline-flex; align-items: center; gap: 8px; }
+.profile-btn img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-bg); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+
+/* Navbar logout button */
+.logout-nav {
+    border: 2px solid var(--danger-color);
+    background: transparent;
+    color: var(--danger-color);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.logout-nav:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Nested comments */
+.comment-item { margin-left: 0; }
+.comment-item { position: relative; padding-right: 40px; }
+.comment-replies { margin-left: 20px; margin-top: 10px; border-left: 2px dashed var(--border-color); padding-left: 12px; }
+.comment-meta { font-size: 0.85rem; color: var(--text-light); }
+.comment-mention { color: var(--primary-gradient); font-weight: 700; }
+
 .delete-post-btn, .delete-comment-btn {
     background: transparent;
     border: 1px solid var(--danger-color);
     color: var(--danger-color);
-    width: 26px; height: 26px;
+    width: 28px; height: 28px;
     border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     position: absolute; top: 12px; right: 12px;
     z-index: 30; font-size: 0.9rem;
-    transition: var(--transition); opacity: 0.9;
+    transition: var(--transition); opacity: 0.95; line-height: 1; font-size: 14px; padding: 0;
 }
 .delete-post-btn:hover, .delete-comment-btn:hover {
     background: var(--danger-color);
     color: white;
     transform: scale(1.1);
     opacity: 1;
+}
+
+/* Smaller load replies button */
+.load-replies-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.load-replies-btn:hover { background: var(--input-bg); color: var(--text-color); }
+
+/* Sidebar logout button style */
+.sidebar-logout-btn {
+    display: block; width: 100%; text-align: left; padding: 12px 14px; border-radius: 8px;
+    border: 2px solid var(--danger-color); color: var(--danger-color); background: transparent; font-weight: 700;
+}
+.sidebar-logout-btn:hover { background: var(--danger-color); color: white; }
+
+/* More specific selectors to ensure logout button styling overrides .sidebar-link rules */
+.sidebar-link.sidebar-logout-btn, button.sidebar-link.sidebar-logout-btn {
+    border: 2px solid var(--danger-color) !important;
+    background: transparent !important;
+    color: var(--danger-color) !important;
+    padding: 12px 14px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    text-align: left !important;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+.sidebar-link.sidebar-logout-btn:hover, button.sidebar-link.sidebar-logout-btn:hover {
+    background: var(--danger-color) !important;
+    color: white !important;
+    transform: none !important; /* prevent translateX from .sidebar-link:hover */
+}
+
+/* Ensure navbar logout (if present) also matches the intended style */
+button.logout-nav, .logout-nav {
+    border: 2px solid var(--danger-color);
+    background: transparent;
+    color: var(--danger-color);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+button.logout-nav:hover, .logout-nav:hover {
+    background: var(--danger-color);
+    color: white;
 }
 
 /* =================================== 
@@ -374,13 +445,11 @@ body.landing-page {
     align-items: center; 
     text-align: center; 
     padding: 20px;
-    margin-top: -50px; /* Nhích nội dung lên một chút để cân bằng thị giác */
-}
+    margin-top: -50px; }
 .landing-header h1 { 
     font-size: clamp(3rem, 6vw, 5rem); 
     font-weight: 800; 
-    margin: 40px 0 10px; /* Giảm margin để không đẩy nội dung xuống quá sâu */
-    background: var(--primary-gradient); 
+    margin: 40px 0 10px;     background: var(--primary-gradient); 
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

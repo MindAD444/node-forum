@@ -18,7 +18,6 @@
 
 
 <script>
-// Thay thế đoạn script hiện tại trong file choose-username.html:
 
 document.getElementById("save-btn").onclick = async () => {
   const username = document.getElementById("username").value.trim();
@@ -35,16 +34,15 @@ document.getElementById("save-btn").onclick = async () => {
 
   const data = await res.json();
 
-  if (res.ok) {
-    // ✅ Lưu token ngay sau khi đặt tên
+    if (res.ok) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("username", data.user.username);
     localStorage.setItem("userId", data.user.id);
-    localStorage.setItem("isAdmin", data.user.isAdmin);
+    localStorage.setItem("role", data.user.role);
+    if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
 
     window.location.href = "home.html";
   } else {
-    // 💡 LƯU Ý: Giữ lại để bắt lỗi nếu có lỗi khác (như lỗi server)
     document.getElementById("message").textContent = data.error || "Lỗi lưu tên."; 
   }
 };

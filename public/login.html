@@ -33,9 +33,7 @@
   <p id="message"></p>
 </main>
 <script src="theme.js"></script>
-<script>
-/* ======= LOGIN BẰNG GOOGLE ======= */
-async function googleLogin(response) {
+<script> async function googleLogin(response) {
   const res = await fetch("/auth/google-login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -44,22 +42,28 @@ async function googleLogin(response) {
 
   const data = await res.json();
 
-  if (data.newUser) {
+      // Server returns { status: "NEW_USER" } for new users
+      if (data.status === "NEW_USER") {
     localStorage.setItem("google_email", data.email);
     localStorage.setItem("google_id", data.googleId);
     return window.location.href = "/choose-username.html";
   }
-
-  // Đăng nhập thành công
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("username", data.user.username);
-  localStorage.setItem("userId", data.user.id);
-  localStorage.setItem("isAdmin", data.user.isAdmin);
+  
+      // Successful login
+      if (data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", data.user.username);
+        localStorage.setItem("userId", data.user.id);
+          localStorage.setItem("role", data.user.role);
+          if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
+        window.location.href = "/home.html";
+      } else {
+        alert('Đăng nhập Google thất bại.');
+      }
 
   window.location.href = "/home.html";
 }
 
-/* ======= LOGIN TRUYỀN THỐNG ======= */
 document.getElementById("login-form").onsubmit = async (e) => {
   e.preventDefault();
 
@@ -77,18 +81,18 @@ document.getElementById("login-form").onsubmit = async (e) => {
 
   const data = await res.json();
 
-  if (res.ok) {
+if (res.ok) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("username", data.user.username);
     localStorage.setItem("userId", data.user.id);
-    localStorage.setItem("isAdmin", data.user.isAdmin);
+     localStorage.setItem("role", data.user.role);
+     if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
 
     window.location.href = "/home.html";
-  } else {
+} else {
     msg.textContent = data.error;
-  }
+}
 };
-// Logic Ẩn/Hiện Mật khẩu (Cho cả 2 trường)
         document.querySelectorAll('.toggle-password').forEach(toggleBtn => {
             toggleBtn.addEventListener('click', function() {
                 const targetId = this.getAttribute('data-target');
@@ -96,12 +100,9 @@ document.getElementById("login-form").onsubmit = async (e) => {
                 
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                
-                // Thay đổi biểu tượng: 👁️ (hiện) <-> 🔒 (ẩn)
                 this.textContent = type === 'text' ? '🔒' : '👁️';
             });
         });
-/* ======= AUTO REDIRECT NẾU ĐÃ ĐĂNG NHẬP ======= */
 if (localStorage.getItem("token")) {
   window.location.href = "home.html";
 }

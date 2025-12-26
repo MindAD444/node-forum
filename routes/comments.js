@@ -10,9 +10,6 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(String(id));
 }
 
-/* -------------------------------------------------------
-   LẤY BÌNH LUẬN (PHÂN TRANG)
-------------------------------------------------------- */
 router.get("/:postId", async (req, res) => {
   try {
     const postId = req.params.postId;
@@ -25,22 +22,26 @@ router.get("/:postId", async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const comments = await Comment.find({ post: postId })
+    // Return only top-level (root) comments and include direct replies count for lazy-loading
+    const roots = await Comment.find({ post: postId, parent: null })
       .populate("author", "username")
-      .sort({ createdAt: 1 }) // cũ nhất trước
-      .skip(skip)
-      .limit(limit)
+      .sort({ createdAt: 1 })
       .lean();
 
-    const totalComments = await Comment.countDocuments({ post: postId });
-    const totalPages = Math.ceil(totalComments / limit);
+    // Aggregate counts of direct replies per parent
+    const counts = await Comment.aggregate([
+      { $match: { post: new mongoose.Types.ObjectId(postId), parent: { $ne: null } } },
+      { $group: { _id: "$parent", count: { $sum: 1 } } }
+    ]);
+    const countMap = {};
+    counts.forEach(c => { countMap[c._id.toString()] = c.count; });
 
-    res.json({
-      comments,
-      totalPages,
-      currentPage: page,
-      totalComments
-    });
+    const results = roots.map(r => ({
+      ...r,
+      repliesCount: countMap[r._id.toString()] || 0
+    }));
+
+    res.json({ comments: results });
 
   } catch (err) {
     console.error("GET /comments error:", err);
@@ -48,13 +49,10 @@ router.get("/:postId", async (req, res) => {
   }
 });
 
-/* -------------------------------------------------------
-   TẠO BÌNH LUẬN MỚI
-------------------------------------------------------- */
 router.post("/:postId", auth("user"), async (req, res) => {
   try {
     const postId = req.params.postId;
-    const { content } = req.body;
+    const { content, parent } = req.body;
 
     if (!isValidObjectId(postId)) {
       return res.status(400).json({ error: "ID bài viết không hợp lệ" });
@@ -64,10 +62,23 @@ router.post("/:postId", auth("user"), async (req, res) => {
       return res.status(400).json({ error: "Nội dung bình luận không được để trống" });
     }
 
+    // Extract mentions in the format @username (case-insensitive)
+    const rawMentions = Array.from(new Set((content.match(/@([a-zA-Z0-9_\-\.]+)/g) || []).map(m => m.slice(1))));
+    let mentionIds = [];
+    if (rawMentions.length > 0) {
+      const User = (await import('../models/User.js')).default;
+      // Build case-insensitive regex queries for each username
+      const or = rawMentions.map(u => ({ username: new RegExp(`^${u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}$`, 'i') }));
+      const users = await User.find({ $or: or }).select('_id');
+      mentionIds = users.map(u => u._id);
+    }
+
     const newComment = await Comment.create({
       post: postId,
       author: req.user._id,
       content: content.trim(),
+      parent: parent && isValidObjectId(parent) ? parent : null,
+      mentions: mentionIds,
     });
 
     await newComment.populate("author", "username");
@@ -80,9 +91,34 @@ router.post("/:postId", auth("user"), async (req, res) => {
   }
 });
 
-/* -------------------------------------------------------
-   XOÁ BÌNH LUẬN (chủ comment hoặc admin)
-------------------------------------------------------- */
+// GET direct replies for a comment (lazy-load)
+router.get('/:postId/replies/:commentId', async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    if (!isValidObjectId(postId) || !isValidObjectId(commentId)) return res.status(400).json({ error: 'ID không hợp lệ' });
+
+    const replies = await Comment.find({ post: postId, parent: commentId })
+      .populate('author', 'username')
+      .sort({ createdAt: 1 })
+      .lean();
+
+    // Include repliesCount for each reply (to know if they have nested replies)
+    const ids = replies.map(r => r._id);
+    const counts = await Comment.aggregate([
+      { $match: { post: new mongoose.Types.ObjectId(postId), parent: { $in: ids.map(i => new mongoose.Types.ObjectId(i)) } } },
+      { $group: { _id: '$parent', count: { $sum: 1 } } }
+    ]);
+    const countMap = {};
+    counts.forEach(c => { countMap[c._id.toString()] = c.count; });
+
+    const results = replies.map(r => ({ ...r, repliesCount: countMap[r._id.toString()] || 0 }));
+    res.json({ replies: results });
+  } catch (err) {
+    console.error('GET replies error:', err);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
 router.delete("/:commentId", auth("user"), async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -99,17 +135,21 @@ router.delete("/:commentId", auth("user"), async (req, res) => {
 
     const isOwner = comment.author.toString() === req.user._id.toString();
 
-    if (!req.user.isAdmin && !isOwner) {
-      return res.status(403).json({ error: "Bạn không có quyền xoá bình luận này." });
+    if (req.user.role !== "admin" && !isOwner) {
+      return res.status(403).json({ error: "Bạn không có quyền xóa bình luận này" });
     }
 
-    await Comment.findByIdAndDelete(commentId);
-
-    res.json({ message: "Đã xoá bình luận thành công." });
-
+    // Cascade delete: remove the comment and all its descendant replies
+    const toDelete = [commentId];
+    for (let i = 0; i < toDelete.length; i++) {
+      const parentIds = toDelete.slice(i).map(id => new mongoose.Types.ObjectId(id));
+      const children = await Comment.find({ parent: { $in: parentIds } }).select('_id').lean();
+      children.forEach(c => toDelete.push(c._id.toString()));
+    }
+    await Comment.deleteMany({ _id: { $in: toDelete.map(id => new mongoose.Types.ObjectId(id)) } });
+    res.json({ message: "Đã xóa bình luận và các trả lời liên quan" });
   } catch (err) {
-    console.error("DELETE /comments error:", err);
-    res.status(500).json({ error: "Lỗi server khi xoá bình luận" });
+    res.status(500).json({ error: "Lỗi server" });
   }
 });
 
