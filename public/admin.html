@@ -82,6 +82,7 @@
               <button class="btn-reject" onclick="rejectPost('${p._id}', this)">
                 Xóa bài
               </button>
+              <button class="btn-ai" onclick="runAICheck('${p._id}', this)">Kiểm tra AI</button>
             </div>
           </div>
         `).join('');
@@ -141,6 +142,31 @@
       } finally {
         btn.disabled = false;
         btn.textContent = "Xóa bài";
+      }
+    }
+
+    async function runAICheck(id, btn) {
+      if (!confirm('Chạy kiểm tra AI cho bài viết này?')) return;
+      btn.disabled = true;
+      btn.textContent = 'Đang kiểm tra...';
+      try {
+        const res = await fetch('/admin/auto-moderate/run-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ postId: id })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          alert('Kết quả AI: ' + (data.result || JSON.stringify(data)));
+        } else {
+          const err = await res.json();
+          alert('Lỗi AI: ' + (err.error || res.status));
+        }
+      } catch (e) {
+        alert('Lỗi kết nối AI.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kiểm tra AI';
       }
     }
 

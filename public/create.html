@@ -11,10 +11,6 @@
     <div class="nav-left">
       <a href="home.html" class="nav-brand">Trang chủ</a>
     </div>
-    <div class="nav-right">
-      <a href="login.html" id="login-link">Đăng nhập</a>
-      <a href="register.html" id="register-link">Đăng ký</a>
-    </div>
   </nav>
 
   <main class="container">
@@ -46,8 +42,6 @@
         window.location.href = "login.html";
         return;
       }
-      document.getElementById("login-link").classList.add("hidden");
-      document.getElementById("register-link").classList.add("hidden");
       document.getElementById("create-post-form").addEventListener("submit", createPost);
       if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
       document.getElementById("theme-toggle")?.addEventListener("click", () => {

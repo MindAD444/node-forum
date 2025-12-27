@@ -69,6 +69,19 @@ body.dark .navbar { background: rgba(30, 41, 59, 0.9); }
 
 .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
 
+/* Navbar auth buttons */
+.nav-right a#login-link, .nav-right a#register-link {
+    display: inline-block; padding: 8px 12px; border-radius: 8px; font-weight: 700; text-decoration: none;
+}
+.nav-right a#login-link {
+    border: 2px solid var(--border-color); color: var(--text-color); background: transparent; margin-right: 6px;
+}
+.nav-right a#login-link:hover { background: var(--input-bg); }
+.nav-right a#register-link {
+    background: var(--primary-gradient); color: white; border: 2px solid transparent;
+}
+.nav-right a#register-link:hover { filter: brightness(1.05); }
+
 .nav-brand { 
     font-weight: 800; font-size: 1.6rem; 
     background: var(--primary-gradient); 
@@ -246,8 +259,8 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
    5. POST CARDS & TAGS + DELETE BUTTON
    =================================== */
 .post-list { 
-    display: flex; flex-direction: column; gap: 10px; 
-    max-width: 800px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr; gap: 20px; 
+    max-width: 1100px; margin: 0 auto; width: 100%;
 }
 
 .post-card, .knowledge-item {
@@ -259,7 +272,7 @@ button:hover, .save-btn:hover, .join-btn:hover, .post-btn:hover, .refresh-btn:ho
     transition: var(--transition); 
     position: relative;
     border-left: 5px solid #2563eb; 
-    margin-bottom: 15px;
+    margin-bottom: 0;
 }
 .knowledge-header{
   display: flex;
@@ -501,7 +514,41 @@ body.landing-page .theme-toggle { position: absolute; top: 20px; right: 20px; }
     .delete-post-btn, .delete-comment-btn { width: 30px; height: 30px; top: 10px; right: 10px; }
 }
 
+/* Desktop: show two posts per row */
+@media (min-width: 992px) {
+    .post-list { grid-template-columns: 1fr 1fr; }
+    .post-card { margin-bottom: 0; }
+}
+
 @media (max-width: 480px) {
     .landing-header h1 { font-size: 4rem; padding-top: 40px; }
     .landing-description { font-size: 1rem; }
 }
+.load-more-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.load-more-btn:hover { background: var(--input-bg); color: var(--text-color); }
+
+/* Admin pending post card styling */
+.post-card-admin {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(250,250,250,0.02));
+    border: 1px dashed var(--border-color);
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+.post-title-admin { margin: 0 0 8px; }
+.post-meta-admin { color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px; }
+.post-content-admin { background: var(--input-bg); padding: 12px; border-radius: 8px; color: var(--text-color); margin-bottom: 12px; }
+.post-images { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.admin-actions { display:flex; gap:8px; }
+
+/* AI moderate button */
+.btn-ai { background: #6b5ce7; padding: 8px 12px; border-radius: 8px; color: white; border: none; cursor: pointer; font-weight:700; }
+.btn-ai:hover { filter: brightness(0.95); }

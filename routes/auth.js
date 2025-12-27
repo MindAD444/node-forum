@@ -123,16 +123,39 @@ res.json({
 router.post("/google-login", async (req, res) => {
   try {
     const { id_token } = req.body;
-    const ticket = await googleClient.verifyIdToken({
-      idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken: id_token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (verifyErr) {
+      // Try to decode token payload for debugging (no signature verification)
+      try {
+        const parts = id_token.split('.');
+        const payloadJson = Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+        const payloadCandidate = JSON.parse(payloadJson);
+        console.error('Google Login Error: verifyIdToken failed. Expected audience:', process.env.GOOGLE_CLIENT_ID, ' Token aud:', payloadCandidate.aud);
+        return res.status(400).json({ error: 'Google token audience mismatch. Expected GOOGLE_CLIENT_ID does not match token audience. Check your client ID configuration.' });
+      } catch (decodeErr) {
+        console.error('Google Login Error (verify):', verifyErr);
+        return res.status(400).json({ error: 'Google token verification failed.' });
+      }
+    }
 
-    const { email, sub: googleId } = ticket.getPayload();
+    const payload = ticket.getPayload();
+    const { email, sub: googleId, picture } = payload;
     let user = await User.findOne({ email });
 
     if (!user) {
       return res.json({ status: "NEW_USER", email, googleId });
+    }
+
+    // If Google provides a profile picture and user doesn't have an avatar saved,
+    // update the user's avatar to the Google picture (only if not already set).
+    if (picture && (!user.avatar || user.avatar.startsWith('https://ui-avatars.com'))) {
+      user.avatar = picture;
+      await user.save();
     }
 
     const token = jwt.sign(
@@ -352,12 +375,23 @@ router.put('/change-password', auth('user'), async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "Người dùng không tồn tại." });
 
-    // Nếu user này đăng nhập bằng Google (không có password)
+    // Nếu user này đăng nhập bằng Google (không có password), cho phép đặt mật khẩu mới
     if (!user.password) {
-      return res.status(400).json({ error: "Tài khoản Google không thể đổi mật khẩu tại đây." });
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Mật khẩu mới phải có ít nhất 6 ký tự." });
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      user.password = hashedPassword;
+      await user.save();
+      return res.json({ message: "Đã thiết lập mật khẩu mới cho tài khoản. Bạn có thể đăng nhập bằng mật khẩu này." });
     }
 
     // 1. Kiểm tra mật khẩu hiện tại
+    if (!currentPassword) {
+      return res.status(400).json({ error: "Vui lòng cung cấp mật khẩu hiện tại." });
+    }
+
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Mật khẩu hiện tại không đúng." });

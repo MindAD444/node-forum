@@ -181,7 +181,10 @@
                 const contentHtml = (r.content || '').replace(/@([a-zA-Z0-9_\-\.]+)/g, '<span class="comment-mention">@$1</span>');
                 const deleteBtn = ((localStorage.getItem('role') === 'admin') || (localStorage.getItem('userId') === (r.author?._id || ''))) ?
                     `<button class="delete-comment-btn" onclick="deleteComment('${r._id}')">❌</button>` : '';
-                return `<div class="comment-item reply-item" id="comment-${r._id}">${deleteBtn}<div class="comment-meta"><strong>${r.author?.username || 'Ẩn danh'}</strong> • ${formatTime(r.createdAt)} · <a href="#" onclick="setReplyTo('${r._id}','${r.author?.username || ''}');return false;">Trả lời</a></div><p style="margin-top:5px">${contentHtml}</p></div>`;
+                // If this reply has its own replies, include a nested container with load button
+                const nestedRepliesHtml = (r.repliesCount && r.repliesCount > 0) ?
+                    `<div class="comment-replies" id="replies-${r._id}"><button class="load-replies-btn" data-id="${r._id}">Xem ${r.repliesCount} trả lời</button></div>` : '';
+                return `<div class="comment-item reply-item" id="comment-${r._id}">${deleteBtn}<div class="comment-meta"><strong>${r.author?.username || 'Ẩn danh'}</strong> • ${formatTime(r.createdAt)} · <a href="#" onclick="setReplyTo('${r._id}','${r.author?.username || ''}');return false;">Trả lời</a></div><p style="margin-top:5px">${contentHtml}</p>${nestedRepliesHtml}</div>`;
             }).join('');
             container.innerHTML = html || '<p style="color:var(--text-light)">Chưa có trả lời nào.</p>';
             container.dataset.loaded = '1';
