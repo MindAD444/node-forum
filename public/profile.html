@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hồ sơ cá nhân - Forum</title>
+  <link rel="icon" href="./favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -21,7 +22,7 @@
     
     <form id="profile-form">
       <div class="avatar-wrapper">
-        <img id="avatar-preview" src="https://cdn.britannica.com/99/236599-050-1199AD2C/Mark-Zuckerberg-2019.jpg" alt="Avatar" class="profile-avatar">
+        <img id="avatar-preview" src="https://via.placeholder.com/150" alt="Avatar" class="profile-avatar">
         <label for="avatar-input" class="upload-label" title="Đổi ảnh đại diện">📷</label>
         <input type="file" id="avatar-input" accept="image/*">
       </div>
@@ -68,26 +69,9 @@
 
   <script src="theme.js"></script>
   <script>
-    // 1. Kiểm tra đăng nhập + kiểm tra token hết hạn
-    const token = localStorage.getItem("token");
-    function isTokenExpired(tok) {
-      if (!tok) return true;
-      try {
-        const parts = tok.split('.');
-        if (parts.length !== 3) return true;
-        const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-        if (!payload.exp) return false;
-        return Date.now() / 1000 > payload.exp;
-      } catch (e) {
-        return true;
-      }
-    }
-
-    if (!token || isTokenExpired(token)) {
-      alert('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
-      localStorage.clear();
-      window.location.href = 'login.html';
-    }
+    // Use server-side session (HttpOnly cookie). Do not attempt to read token from JS.
+    // Clear localStorage since site is private and we use cookies for auth state
+    try { localStorage.clear(); } catch (e) { /* ignore */ }
 
     // Format remaining cooldown days
     function formatRemainingTime(ms) {
@@ -99,14 +83,11 @@
     // Load profile and show cooldown info
     async function loadProfile() {
       try {
-          const res = await fetch("/auth/me", {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
+          const res = await fetch("/auth/me", { credentials: 'include' });
 
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             alert("Phiên đăng nhập hết hạn.");
-            localStorage.removeItem("token");
             window.location.href = "login.html";
             return;
           }
@@ -196,7 +177,7 @@
       try {
         const res = await fetch("/auth/me", {
           method: "PUT",
-          headers: { "Authorization": `Bearer ${token}` },
+          credentials: 'include',
           body: formData
         });
 
@@ -204,8 +185,11 @@
         if (res.ok) {
           msg.style.color = "green";
           msg.textContent = "✅ Cập nhật thành công!";
-          if (data.user && data.user.username) localStorage.setItem("username", data.user.username);
-          if (data.user && data.user.role) localStorage.setItem("role", data.user.role);
+          // update cookies (30 days)
+          const secureFlag = location.protocol === 'https:' ? '; Secure' : '';
+          if (data.user && data.user.username) document.cookie = `username=${encodeURIComponent(data.user.username)}; Max-Age=${30*24*60*60}; path=/; SameSite=Lax${secureFlag}`;
+          if (data.user && data.user.role) document.cookie = `role=${encodeURIComponent(data.user.role)}; Max-Age=${30*24*60*60}; path=/; SameSite=Lax${secureFlag}`;
+          if (data.user && data.user.avatar) document.cookie = `avatar=${encodeURIComponent(data.user.avatar)}; Max-Age=${30*24*60*60}; path=/; SameSite=Lax${secureFlag}`;
           loadProfile();
         } else {
           msg.style.color = "red";
@@ -250,10 +234,8 @@
       try {
         const res = await fetch("/auth/change-password", {
           method: "PUT",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` 
-          },
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ currentPassword, newPassword })
         });
 

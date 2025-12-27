@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản trị - Forum</title>
+  <link rel="icon" href="./favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -22,18 +23,24 @@
 </div>
   <script src="theme.js"></script>
 <script>
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    if (!token || role !== "admin") {
-      alert("Bạn không có quyền truy cập trang này!");
-      window.location.href = "home.html";
+    // Check server session for admin role
+    async function ensureAdmin() {
+      try {
+        const r = await fetch('/auth/me', { credentials: 'include' });
+        if (!r.ok) throw new Error('Unauthorized');
+        const user = await r.json();
+        if (user.role !== 'admin') throw new Error('Forbidden');
+        return user;
+      } catch (e) {
+        alert('Bạn không có quyền truy cập trang này!');
+        window.location.href = 'home.html';
+        throw e;
+      }
     }
 
     async function loadPendingPosts() {
       try {
-        const res = await fetch("/admin/pending", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        const res = await fetch("/admin/pending", { credentials: 'include' });
 
         if (!res.ok) {
           if (res.status === 403) return alert("Bạn không có quyền quản trị!");
@@ -100,7 +107,7 @@
       try {
         const res = await fetch(`/admin/approve/${id}`, {
           method: "PUT",
-          headers: { "Authorization": `Bearer ${token}` }
+          credentials: 'include'
         });
         if (res.ok) {
           btn.closest(".post-card-admin").style.opacity = "0.5";
@@ -126,7 +133,7 @@
       try {
         const res = await fetch(`/admin/reject/${id}`, {
           method: "DELETE",
-          headers: { "Authorization": `Bearer ${token}` }
+          credentials: 'include'
         });
         if (res.ok) {
           btn.closest(".post-card-admin").style.opacity = "0.3";
@@ -152,7 +159,8 @@
       try {
         const res = await fetch('/admin/auto-moderate/run-check', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ postId: id })
         });
         if (res.ok) {
@@ -175,8 +183,10 @@
       div.textContent = text;
       return div.innerHTML.replace(/\n/g, '<br>');
     }
-setInterval(loadPendingPosts, 30000);
-loadPendingPosts();
+ensureAdmin().then(() => {
+  setInterval(loadPendingPosts, 30000);
+  loadPendingPosts();
+});
   </script>
 </body>
 </html>

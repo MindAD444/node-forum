@@ -1,26 +1,32 @@
 // theme.js — quản lý chế độ sáng/tối cho toàn site
 
-// Áp dụng dark mode nếu đã lưu
-(function applySavedTheme() {
-  const theme = localStorage.getItem("theme");
-  if (theme === "dark") document.body.classList.add("dark");
-})();
-
-// Gắn sự kiện toggle (nếu trang có nút)
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-  localStorage.setItem(
-    "theme",
-    document.body.classList.contains("dark") ? "dark" : "light"
-  );
+// Theme stored in first-party cookie
+function setCookie(name, value, days, opts = {}){
+  let cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value) + '; path=/';
+  if (days) cookie += '; Max-Age=' + (days*24*60*60);
+  if (opts.secure) cookie += '; Secure';
+  if (opts.sameSite) cookie += '; SameSite=' + opts.sameSite;
+  document.cookie = cookie;
 }
-const body = document.body;
-    const toggle = document.getElementById("theme-toggle");
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") body.classList.add("dark");
+function getCookie(name){
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (let c of cookies){
+    const idx = c.indexOf('=');
+    const k = decodeURIComponent(c.substring(0, idx));
+    const v = decodeURIComponent(c.substring(idx+1));
+    if (k === name) return v;
+  }
+  return null;
+}
 
-    toggle.addEventListener("click", () => {
-      body.classList.toggle("dark");
-      localStorage.setItem("theme", body.classList.contains("dark") ? "dark" : "light");
-    });
+// Apply saved theme from cookie
+const body = document.body;
+const saved = getCookie('theme');
+if (saved === 'dark') body.classList.add('dark');
+
+const toggle = document.getElementById('theme-toggle');
+if (toggle) toggle.addEventListener('click', () => {
+  body.classList.toggle('dark');
+  setCookie('theme', body.classList.contains('dark') ? 'dark' : 'light', 365, { sameSite: 'Lax', secure: location.protocol === 'https:' });
+});
 

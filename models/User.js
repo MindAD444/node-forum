@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   googleId: { type: String, unique: true, sparse: true },
   avatar: { 
     type: String, 
-    default: "https://ui-avatars.com/api/?name=User&background=random" 
+    default: "https://cdn.britannica.com/99/236599-050-1199AD2C/Mark-Zuckerberg-2019.jpg" 
   },
   usernameLastChangedAt: { type: Date, default: Date.now },
   usernameChangeCount: { type: Number, default: 0 },

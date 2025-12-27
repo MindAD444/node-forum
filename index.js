@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from 'cookie-parser';
 import path from "path";
 import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary";
@@ -21,7 +22,9 @@ await connectDB();
 
 const app = express();
 
-app.use(cors());
+// Allow credentials for cookie-based auth; keep origin flexible for local dev
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

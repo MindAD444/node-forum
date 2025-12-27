@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đăng nhập - Forum</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="icon" href="./favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -21,47 +22,54 @@
     <input id="password" type="password" placeholder="Mật khẩu" required>
     <span class="toggle-password" data-target="password">👁️</span>
     </div>
-    <a href="forgot-password.html" style="display: block; text-align: right;">Quên mật khẩu?</a>
+    <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+      <label style="display:inline-flex; align-items:center; cursor:pointer; margin:0;">
+        <input type="checkbox" id="remember-me" style="margin-right:8px;">Ghi nhớ đăng nhập
+      </label>
+      <a href="forgot-password.html" style="display:inline-block;">Quên mật khẩu?</a>
+    </div>
 <br>
-    <button type="submit" >Đăng nhập</button>
+    <button type="submit" style="margin-bottom: 10px;">Đăng nhập</button>
     <div id="g_id_onload"
        data-client_id="38606798612-fq044elhgado3bhf3a62e9boh4rom469.apps.googleusercontent.com"
        data-callback="googleLogin"></div>
     <div class="g_id_signin" data-type="standard"></div>
   </form>
-  <p>Chưa có tài khoản?<a href="register.html"> Đăng ký<p/>
+  <p>Chưa có tài khoản?<a href="register.html"> Đăng ký</a></p>
   <p id="message"></p>
 </main>
 <script src="theme.js"></script>
 <script> async function googleLogin(response) {
+  const remember = document.getElementById('remember-me') && document.getElementById('remember-me').checked;
   const res = await fetch("/auth/google-login", {
     method: "POST",
+    credentials: 'include',
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_token: response.credential })
+    body: JSON.stringify({ id_token: response.credential, remember })
   });
 
   const data = await res.json();
 
       // Server returns { status: "NEW_USER" } for new users
       if (data.status === "NEW_USER") {
-    localStorage.setItem("google_email", data.email);
-    localStorage.setItem("google_id", data.googleId);
-    return window.location.href = "/choose-username.html";
-  }
-  
-      // Successful login
-      if (data.token && data.user) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("google_email", data.email);
+        localStorage.setItem("google_id", data.googleId);
+        // preserve remember choice for set-username step
+        if (remember) localStorage.setItem('rememberLogin','1');
+        return window.location.href = "/choose-username.html";
+      }
+
+      // Successful login: server sets HttpOnly cookie; response contains user
+      if (data.user) {
+        // store non-sensitive info client-side for UI
         localStorage.setItem("username", data.user.username);
         localStorage.setItem("userId", data.user.id);
-          localStorage.setItem("role", data.user.role);
-          if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
+        localStorage.setItem("role", data.user.role);
+        if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
         window.location.href = "/home.html";
       } else {
         alert('Đăng nhập Google thất bại.');
       }
-
-  window.location.href = "/home.html";
 }
 
 document.getElementById("login-form").onsubmit = async (e) => {
@@ -73,25 +81,28 @@ document.getElementById("login-form").onsubmit = async (e) => {
 
   msg.textContent = "Đang xử lý...";
 
+  const remember = document.getElementById('remember-me') && document.getElementById('remember-me').checked;
   const res = await fetch("/auth/login", {
     method: "POST",
+    credentials: 'include',
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, password, remember })
   });
 
   const data = await res.json();
 
-if (res.ok) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("username", data.user.username);
-    localStorage.setItem("userId", data.user.id);
-     localStorage.setItem("role", data.user.role);
-     if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
-
+  if (res.ok) {
+    // server sets HttpOnly token cookie; use returned user info for UI
+    if (data.user) {
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("role", data.user.role);
+      if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
+    }
     window.location.href = "/home.html";
-} else {
+  } else {
     msg.textContent = data.error;
-}
+  }
 };
         document.querySelectorAll('.toggle-password').forEach(toggleBtn => {
             toggleBtn.addEventListener('click', function() {
@@ -103,9 +114,10 @@ if (res.ok) {
                 this.textContent = type === 'text' ? '🔒' : '👁️';
             });
         });
-if (localStorage.getItem("token")) {
-  window.location.href = "home.html";
-}
+// If server-side session exists (HttpOnly cookie), redirect to home
+fetch('/auth/me', { credentials: 'include' })
+  .then(res => { if (res.ok) window.location.href = 'home.html'; })
+  .catch(() => {});
 </script>
 
 </body>

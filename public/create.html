@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đăng bài mới - Forum</title>
+  <title>Tạo bài viết</title>
+  <link rel="icon" href="./favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -36,13 +37,14 @@
   <script src="app.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      // Ensure user is authenticated via server-side session (HttpOnly cookie)
+      fetch('/auth/me', { credentials: 'include' }).then(r => {
+        if (!r.ok) throw r;
+        document.getElementById("create-post-form").addEventListener("submit", createPost);
+      }).catch(() => {
         alert("Bạn cần đăng nhập để đăng bài.");
         window.location.href = "login.html";
-        return;
-      }
-      document.getElementById("create-post-form").addEventListener("submit", createPost);
+      });
       if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
       document.getElementById("theme-toggle")?.addEventListener("click", () => {
         document.body.classList.toggle("dark");
@@ -74,14 +76,14 @@
         formData.append("files", files[i]);
       }
 
-      const token = localStorage.getItem("token");
+      // Use server-side cookie for auth; include credentials so cookie is sent
       messageEl.textContent = "Đang gửi bài viết...";
       submitBtn.disabled = true;
 
       try {
         const res = await fetch("/posts", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
+          credentials: 'include',
           body: formData
         });
 

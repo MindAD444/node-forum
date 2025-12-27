@@ -85,7 +85,7 @@ router.post('/register/verify', async (req, res) => {
 // 2. LOGIN (ĐĂNG NHẬP)
 // ============================================================
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, remember } = req.body;
   
   // Tìm user theo username HOẶC email
   // Lưu ý: Nếu có nhiều người cùng username, logic này sẽ lấy người đầu tiên tìm thấy.
@@ -95,26 +95,27 @@ router.post('/login', async (req, res) => {
   if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(400).json({ error: "Sai thông tin đăng nhập." });
 
- const token = jwt.sign(
-    { 
-        id: user._id, 
-        username: user.username, 
-        role: user.role
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-);
+ const expires = remember ? '30d' : '1d';
+ const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: expires });
 
-// Trả về cho client
-res.json({
-    token,
-    user: {
-        id: user._id,
-        username: user.username,
-    role: user.role,
-    avatar: user.avatar
-    }
-});
+ // Set HttpOnly cookie for the token
+ const maxAge = remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30d or 1d
+ res.cookie('token', token, {
+   httpOnly: true,
+   sameSite: 'Lax',
+   secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+   maxAge
+ });
+
+ // Return user info (token is stored in HttpOnly cookie)
+ res.json({
+   user: {
+     id: user._id,
+     username: user.username,
+     role: user.role,
+     avatar: user.avatar
+   }
+ });
 });
 
 // ============================================================
@@ -122,7 +123,7 @@ res.json({
 // ============================================================
 router.post("/google-login", async (req, res) => {
   try {
-    const { id_token } = req.body;
+    const { id_token, remember } = req.body;
     let ticket;
     try {
       ticket = await googleClient.verifyIdToken({
@@ -158,15 +159,20 @@ router.post("/google-login", async (req, res) => {
       await user.save();
     }
 
-    const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const expires = remember ? '30d' : '1d';
+    const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: expires });
+
+    // Set HttpOnly cookie
+    const maxAge = remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'Lax',
+      secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+      maxAge
+    });
 
     return res.json({
       status: "OK",
-      token,
       user: { id: user._id, username: user.username, avatar: user.avatar, role: user.role }
     });
 
@@ -178,7 +184,7 @@ router.post("/google-login", async (req, res) => {
 
 // Set username cho lần đầu login Google (CHO PHÉP TRÙNG TÊN)
 router.post("/set-username", async (req, res) => {
-  const { email, googleId, username } = req.body;
+  const { email, googleId, username, remember } = req.body;
 
   // BỎ kiểm tra trùng username
   const user = await User.create({ 
@@ -188,17 +194,23 @@ router.post("/set-username", async (req, res) => {
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`
   });
 
-  const token = jwt.sign(
-    { id: user._id, username: user.username, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  return res.json({
-    success: true,
-    token,
-    user: { id: user._id, username: user.username, role: user.role, avatar: user.avatar }
+  const expires = remember ? '30d' : '1d';
+  const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: expires });
+  const maxAge = remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+  res.cookie('token', token, {
+    httpOnly: true,
+    sameSite: 'Lax',
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    maxAge
   });
+
+  return res.json({ success: true, user: { id: user._id, username: user.username, role: user.role, avatar: user.avatar } });
+});
+
+// Logout (clear HttpOnly cookie)
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', { path: '/' });
+  res.json({ success: true, message: 'Đã đăng xuất.' });
 });
 
 // ============================================================

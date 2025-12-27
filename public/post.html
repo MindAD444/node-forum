@@ -8,7 +8,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="page-title">Đang tải bài viết...</title>
-  <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="./favicon.svg" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -63,6 +64,8 @@
     const loginHint = document.getElementById("login-hint");
     let commentPage = 1;
     const commentsPerPage = 10;
+    let currentUserId = null;
+    let currentUserRole = null;
     function formatTime(isoString) {
         const date = new Date(isoString);
         return date.toLocaleDateString('vi-VN', {
@@ -78,11 +81,10 @@
     async function deletePost(postId) {
         if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) return;
 
-        const token = localStorage.getItem("token");
         try {
             const res = await fetch(`/posts/${postId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include'
             });
 
             if (res.ok) {
@@ -139,8 +141,7 @@
     document.getElementById('cancel-reply').onclick = (e) => { e.preventDefault(); replyParentId = null; document.getElementById('reply-info').style.display = 'none'; };
 
     function renderComment(comment) {
-        const currentUserId = localStorage.getItem("userId");
-        const isAdmin = localStorage.getItem("role") === 'admin';
+        const isAdmin = currentUserRole === 'admin';
         const isOwner = comment.author?._id === currentUserId;
 
         const deleteBtn = (isAdmin || isOwner) ?
@@ -179,7 +180,7 @@
             const data = await res.json();
             const html = (data.replies || []).map(r => {
                 const contentHtml = (r.content || '').replace(/@([a-zA-Z0-9_\-\.]+)/g, '<span class="comment-mention">@$1</span>');
-                const deleteBtn = ((localStorage.getItem('role') === 'admin') || (localStorage.getItem('userId') === (r.author?._id || ''))) ?
+                const deleteBtn = ((currentUserRole === 'admin') || (currentUserId === (r.author?._id || ''))) ?
                     `<button class="delete-comment-btn" onclick="deleteComment('${r._id}')">❌</button>` : '';
                 // If this reply has its own replies, include a nested container with load button
                 const nestedRepliesHtml = (r.repliesCount && r.repliesCount > 0) ?
@@ -204,17 +205,13 @@
     commentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const content = document.getElementById('comment-input').value.trim();
-        const token = localStorage.getItem('token');
-
-        if (!content || !token) return;
+        if (!content) return;
 
         try {
             const res = await fetch(`/comments/${postId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content, parent: replyParentId })
                 });
             if (res.ok) {
@@ -232,11 +229,10 @@
     async function deleteComment(commentId) {
         if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
 
-        const token = localStorage.getItem("token");
         try {
             const res = await fetch(`/comments/${commentId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include'
             });
 
             if (res.ok) {
@@ -275,11 +271,8 @@
             document.getElementById("post-date").innerHTML = `🕐 Đăng lúc: ${formatTime(post.createdAt)}`;
             document.getElementById("post-content").innerHTML = post.content.replace(/\n/g, '<br>');
 
-            const currentUserId = localStorage.getItem("userId");
-            const isAdmin = localStorage.getItem("role") === 'admin';
             const deleteBtn = document.getElementById("delete-post-btn");
-
-            if (isAdmin || (post.author && currentUserId === post.author._id)) {
+            if ((currentUserRole === 'admin') || (post.author && currentUserId === post.author._id)) {
                 deleteBtn.classList.remove("hidden");
             } else {
                 deleteBtn.classList.add("hidden");
@@ -305,24 +298,29 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        const token = localStorage.getItem('token');
-
-        if (token) {
+        // Try server-side session via HttpOnly cookie
+        fetch('/auth/me', { credentials: 'include' }).then(r => {
+            if (!r.ok) throw r;
+            return r.json();
+        }).then(user => {
+            currentUserId = user._id || user.id || null;
+            currentUserRole = user.role || null;
+            // show comment form
             commentForm.classList.remove('hidden');
             loginHint.classList.add('hidden');
             document.getElementById('login-link').classList.add('hidden');
             const logoutNav = document.getElementById('logout-nav');
-            if (logoutNav) { logoutNav.classList.remove('hidden'); logoutNav.onclick = () => { if (confirm('Đăng xuất?')) { localStorage.clear(); location.reload(); } }; }
-        } else {
+            if (logoutNav) { logoutNav.classList.remove('hidden'); logoutNav.onclick = () => { if (confirm('Đăng xuất?')) { fetch('/auth/logout',{ method: 'POST', credentials: 'include' }).finally(()=>{ localStorage.clear(); location.reload(); }); } }; }
+        }).catch(() => {
+            // not logged in
             commentForm.classList.add('hidden');
             loginHint.classList.remove('hidden');
             document.getElementById('login-link').classList.remove('hidden');
             const logoutNav = document.getElementById('logout-nav'); if (logoutNav) logoutNav.classList.add('hidden');
-        }
-
-        document.getElementById('load-more-comments').addEventListener('click', () => loadComments(false));
-
-        loadPostDetail();
+        }).finally(() => {
+            document.getElementById('load-more-comments').addEventListener('click', () => loadComments(false));
+            loadPostDetail();
+        });
     });
 </script>
 </body>

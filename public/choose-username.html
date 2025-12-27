@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chọn tên người dùng</title>
+  <link rel="icon" href="./favicon.svg" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,21 +27,23 @@ document.getElementById("save-btn").onclick = async () => {
 
   if (!username) return;
 
+  const remember = localStorage.getItem('rememberLogin') === '1';
   const res = await fetch("/auth/set-username", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, googleId, username })
+    body: JSON.stringify({ email, googleId, username, remember })
   });
 
   const data = await res.json();
 
     if (res.ok) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("username", data.user.username);
-    localStorage.setItem("userId", data.user.id);
-    localStorage.setItem("role", data.user.role);
-    if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
-
+    // server sets HttpOnly cookie; store non-sensitive UI info
+    if (data.user) {
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("role", data.user.role);
+      if (data.user.avatar) localStorage.setItem("avatar", data.user.avatar);
+    }
     window.location.href = "home.html";
   } else {
     document.getElementById("message").textContent = data.error || "Lỗi lưu tên."; 
